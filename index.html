@@ -872,8 +872,9 @@ const SECTIONS = [
 let PEOPLE = []
 
 let SESSION            = { personId: null, isMaster: false }
-let PENDING_APPROVALS  = []
-let FORMER_MEMBERS     = []
+let PENDING_APPROVALS    = []
+let FORMER_MEMBERS       = []
+let PIN_RESET_REQUESTS   = []
 
 const MEMBER_COLORS = [
   '#1a56db', '#E02424', '#16a34a', '#ea580c',
@@ -1159,10 +1160,12 @@ function signOut() {
 var pinState = { personId: null, mode: 'enter', digits: [], firstPin: null, onSuccess: null }
 
 function getPin(personId) {
-  try { return JSON.parse(localStorage.getItem('bae_pins') || '{}')[personId] || null } catch(e) { return null }
+  const p = PEOPLE.find(function(x) { return x.id === personId })
+  return p ? (p.pin || null) : null
 }
 function savePin(personId, pin) {
-  try { var p = JSON.parse(localStorage.getItem('bae_pins') || '{}'); p[personId] = pin; localStorage.setItem('bae_pins', JSON.stringify(p)) } catch(e) {}
+  const p = PEOPLE.find(function(x) { return x.id === personId })
+  if (p) { p.pin = pin; saveState() }
 }
 
 function openPinModal(personId, opts) {
@@ -1267,14 +1270,18 @@ function processPin() {
 }
 
 function pinForgot() {
-  if (pinState.personId === 'master') {
-    toast('PIN reset link sent to bangunasa@bangunasaecos.com')
-    return
-  }
+  if (pinState.personId === 'master') return
   const person = PEOPLE.find(p => p.id === pinState.personId)
   if (!person) return
-  const email = person.email || 'their registered email'
-  toast('PIN reset link sent to ' + email)
+  const already = PIN_RESET_REQUESTS.find(r => r.personId === person.id)
+  if (already) { toast('Request already sent — waiting for master to reset your PIN'); return }
+  PIN_RESET_REQUESTS.push({
+    id: 'pr_' + Date.now(), personId: person.id, name: person.name,
+    email: person.email || '', color: person.color, initials: person.initials,
+    requestedAt: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  })
+  saveState()
+  toast('PIN reset request sent to master ✓')
 }
 
 function openChangePinModal() {
@@ -1337,35 +1344,64 @@ function rejectMember(paId) {
   renderPeople()
 }
 
+function resetMemberPin(reqId) {
+  const req = PIN_RESET_REQUESTS.find(r => r.id === reqId)
+  if (!req) return
+  const person = PEOPLE.find(p => p.id === req.personId)
+  if (person) { person.pin = null }
+  PIN_RESET_REQUESTS = PIN_RESET_REQUESTS.filter(r => r.id !== reqId)
+  saveState()
+  toast((person ? person.name : 'Member') + '\'s PIN has been reset ✓')
+  renderPeople()
+}
+
 function renderPendingApprovals() {
   const el = document.getElementById('pending-approvals-section')
   if (!el) return
   if (!SESSION.isMaster) { el.innerHTML = ''; return }
-  const badge = PENDING_APPROVALS.length ? `<span class="messages-badge">${PENDING_APPROVALS.length}</span>` : ''
-  const cards = PENDING_APPROVALS.length
-    ? PENDING_APPROVALS.map(pa => {
-        const initials = pa.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0,2)
-        return `
-          <div class="msg-card">
-            <div class="msg-avatar">${initials}</div>
-            <div class="msg-body">
-              <div class="msg-name">${pa.name}</div>
-              <div class="msg-email">${pa.email}</div>
-              <div class="msg-date">Requested ${pa.requestedAt}</div>
-            </div>
-            <div class="msg-actions">
-              <button class="accept-btn" onclick="approveMember('${pa.id}')">Approve</button>
-              <button class="decline-btn" onclick="rejectMember('${pa.id}')">Reject</button>
-            </div>
-          </div>`
-      }).join('')
-    : `<div class="msg-empty">No pending requests</div>`
+
+  const totalBadge = PENDING_APPROVALS.length + PIN_RESET_REQUESTS.length
+  const badge = totalBadge ? `<span class="messages-badge">${totalBadge}</span>` : ''
+
+  const joinCards = PENDING_APPROVALS.map(pa => {
+    const initials = pa.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0,2)
+    return `
+      <div class="msg-card">
+        <div class="msg-avatar">${initials}</div>
+        <div class="msg-body">
+          <div class="msg-name">${pa.name}</div>
+          <div class="msg-email">${pa.email}</div>
+          <div class="msg-date">Join request · ${pa.requestedAt}</div>
+        </div>
+        <div class="msg-actions">
+          <button class="accept-btn" onclick="approveMember('${pa.id}')">Approve</button>
+          <button class="decline-btn" onclick="rejectMember('${pa.id}')">Reject</button>
+        </div>
+      </div>`
+  })
+
+  const pinCards = PIN_RESET_REQUESTS.map(r => `
+    <div class="msg-card">
+      <div class="msg-avatar" style="background:${r.color}">${r.initials}</div>
+      <div class="msg-body">
+        <div class="msg-name">${r.name}</div>
+        <div class="msg-email">${r.email}</div>
+        <div class="msg-date">Forgot PIN · ${r.requestedAt}</div>
+      </div>
+      <div class="msg-actions">
+        <button class="accept-btn" onclick="resetMemberPin('${r.id}')">Reset PIN</button>
+      </div>
+    </div>`)
+
+  const allCards = [...joinCards, ...pinCards]
+  const body = allCards.length ? allCards.join('') : `<div class="msg-empty">No pending requests</div>`
+
   el.innerHTML = `
     <div class="messages-section">
       <div class="messages-header">
         <div class="messages-title">📬 Messages ${badge}</div>
       </div>
-      ${cards}
+      ${body}
     </div>`
 }
 
@@ -3468,8 +3504,9 @@ function loadAndSync() {
     if (d.tasks)            TASKS            = d.tasks
     if (d.done)             DONE             = d.done
     if (d.sectionData)      SECTION_DATA     = d.sectionData
-    if (d.pendingApprovals) PENDING_APPROVALS = d.pendingApprovals
-    if (d.formerMembers)   FORMER_MEMBERS    = d.formerMembers
+    if (d.pendingApprovals)  PENDING_APPROVALS  = d.pendingApprovals
+    if (d.formerMembers)    FORMER_MEMBERS     = d.formerMembers
+    if (d.pinResetRequests) PIN_RESET_REQUESTS = d.pinResetRequests
     checkUserApproval()
   })
 }
@@ -3523,6 +3560,7 @@ function saveState() {
     sectionData:      SECTION_DATA,
     pendingApprovals: PENDING_APPROVALS,
     formerMembers:    FORMER_MEMBERS,
+    pinResetRequests: PIN_RESET_REQUESTS,
     updatedAt:        firebase.firestore.FieldValue.serverTimestamp()
   }).catch(function(e) { console.error('saveState error:', e) })
 }
