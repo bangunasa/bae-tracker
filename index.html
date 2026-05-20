@@ -1,0 +1,3705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BAE — Design Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:      #F5F4EF;
+      --white:   #FFFFFF;
+      --text:    #111111;
+      --muted:   rgba(17,17,17,0.42);
+      --faint:   rgba(17,17,17,0.07);
+      --border:  rgba(17,17,17,0.1);
+      --blue:    #1a56db;
+      --blue-bg: #eff4ff;
+      --blue-br: rgba(26,86,219,.2);
+      --red:     #E02424;
+      --red-bg:  #fef2f2;
+      --red-br:  rgba(224,36,36,.2);
+      --green:   #16a34a;
+      --green-bg:#f0fdf4;
+      --green-br:rgba(22,163,74,.3);
+      --orange:  #ea580c;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100dvh; -webkit-font-smoothing: antialiased; }
+    button { font-family: 'DM Sans', sans-serif; }
+
+    /* ── HEADER ── */
+    #header {
+      position: sticky; top: 0; z-index: 100; height: 56px; padding: 0 20px;
+      display: flex; align-items: center; justify-content: space-between;
+      background: rgba(245,244,239,.96); backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+    .header-left { display: flex; align-items: center; gap: 10px; }
+    #back-btn { display: none; align-items: center; gap: 4px; background: none; border: none; padding: 6px 8px 6px 2px; font-size: .82rem; font-weight: 500; color: var(--muted); cursor: pointer; }
+    #back-btn.show { display: flex; }
+    .header-brand-wrap { display: flex; align-items: center; gap: 9px; }
+    .header-logo { height: 28px; width: auto; object-fit: contain; display: block; }
+    .header-brand-text { display: flex; flex-direction: column; line-height: 1.15; }
+    .header-brand { font-size: .82rem; font-weight: 700; letter-spacing: .06em; }
+    .header-sub   { font-size: .58rem; font-weight: 500; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+    .header-right { display: flex; align-items: center; gap: 10px; }
+    .user-avatar  { width: 30px; height: 30px; border-radius: 50%; background: var(--text); color: #fff; display: flex; align-items: center; justify-content: center; font-size: .68rem; font-weight: 600; }
+    .btn-signout  { background: none; border: 1px solid var(--border); border-radius: 20px; padding: 5px 12px; font-size: .7rem; font-weight: 500; color: var(--muted); cursor: pointer; }
+
+    main { max-width: 640px; margin: 0 auto; padding: 24px 20px 100px; }
+
+    .view-title { font-size: 1.3rem; font-weight: 700; letter-spacing: -.01em; margin-bottom: 2px; }
+    .view-sub   { font-size: .78rem; color: var(--muted); margin-bottom: 20px; }
+
+    .prog-bar-wrap { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+    .prog-bar      { flex: 1; height: 5px; background: rgba(224,36,36,.22); border-radius: 5px; overflow: hidden; }
+    .prog-bar-fill { height: 100%; background: var(--blue); border-radius: 5px; transition: width .4s; }
+    .prog-label    { font-size: .72rem; font-weight: 600; color: var(--muted); white-space: nowrap; }
+
+    .add-btn { width: 100%; padding: 14px 18px; border: 1.5px dashed rgba(17,17,17,.18); border-radius: 12px; background: none; font-size: .85rem; color: var(--muted); cursor: pointer; margin-bottom: 16px; transition: all .2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .add-btn:hover { border-color: var(--text); color: var(--text); background: var(--faint); }
+    .add-btn.sm { padding: 12px 16px; font-size: .82rem; border-radius: 10px; }
+    .chevron { color: var(--muted); font-size: 1.1rem; padding: 4px; }
+
+    /* ── BADGES ── */
+    .badge          { display: inline-block; font-size: .58rem; font-weight: 600; border-radius: 4px; padding: 2px 6px; vertical-align: middle; margin-left: 2px; }
+    .badge-done     { color: var(--green);  background: var(--green-bg); border: 1px solid var(--green-br); }
+    .badge-released { color: #fff;          background: var(--green); }
+    .badge-revision { color: #fff;          background: var(--orange); }
+
+    /* ── PEOPLE VIEW ── */
+    .people-grid { display: flex; flex-direction: column; gap: 10px; }
+    .person-card {
+      background: var(--white); border: 1px solid var(--border); border-radius: 12px;
+      padding: 18px; cursor: pointer; display: flex; align-items: center; gap: 16px; transition: all .2s;
+    }
+    .person-card:hover { border-color: rgba(17,17,17,.22); box-shadow: 0 2px 12px rgba(0,0,0,.06); }
+
+    /* ── Champion card ── */
+    .person-card.champ { border: 2px solid #f59e0b; overflow:visible; margin-top:16px; animation: champPulse 2.4s ease-in-out infinite; }
+    .person-card.champ:hover { border-color: #fbbf24; }
+    @keyframes champPulse {
+      0%,100% { box-shadow: 0 0 0 0 rgba(245,158,11,0), 0 2px 8px rgba(0,0,0,.06) }
+      50%      { box-shadow: 0 0 0 7px rgba(245,158,11,.13), 0 6px 24px rgba(245,158,11,.22) }
+    }
+    .champ-ribbon {
+      position:absolute; top:-1px; right:-1px; z-index:2;
+      background:linear-gradient(135deg,#f59e0b,#d97706);
+      color:#fff; font-size:.56rem; font-weight:800; letter-spacing:.05em;
+      padding:4px 9px 4px 7px; border-radius:0 10px 0 10px;
+      animation: ribbonPop .55s cubic-bezier(.34,1.56,.64,1) both;
+    }
+    @keyframes ribbonPop { from{transform:scale(0) rotate(18deg);opacity:0} to{transform:scale(1) rotate(0);opacity:1} }
+    .crown-anim {
+      position:absolute; top:-16px; left:50%; transform:translateX(-50%); font-size:1.15rem; line-height:1; z-index:4;
+      animation: crownFloat 1.6s ease-in-out infinite;
+    }
+    @keyframes crownFloat {
+      0%,100% { transform:translateX(-50%) translateY(0) rotate(-10deg) }
+      50%      { transform:translateX(-50%) translateY(-7px) rotate(10deg) }
+    }
+    .champ-avatar-ring {
+      position:absolute; inset:-5px; border-radius:50%;
+      border:2.5px solid transparent;
+      background:linear-gradient(white,white) padding-box,
+                 linear-gradient(90deg,#f59e0b,#fde68a,#f59e0b,#fde68a) border-box;
+      animation: ringRotate 2s linear infinite;
+    }
+    @keyframes ringRotate { to { filter: hue-rotate(30deg) } }
+
+    /* ── Encouragement card (last rank) ── */
+    .person-card.encourage { border: 2px solid #6366f1; overflow:visible; margin-bottom:16px; animation: encPulse 2s ease-in-out infinite; }
+    .person-card.encourage:hover { border-color: #818cf8; }
+    @keyframes encPulse {
+      0%,100% { box-shadow: 0 0 0 0 rgba(99,102,241,0), 0 2px 8px rgba(0,0,0,.06) }
+      50%      { box-shadow: 0 0 0 7px rgba(99,102,241,.12), 0 6px 20px rgba(99,102,241,.18) }
+    }
+    .encourage-ribbon {
+      position:absolute; top:-1px; right:-1px; z-index:2;
+      background:linear-gradient(135deg,#6366f1,#4f46e5);
+      color:#fff; font-size:.56rem; font-weight:800; letter-spacing:.05em;
+      padding:4px 9px 4px 7px; border-radius:0 10px 0 10px;
+      animation: ribbonPop .55s cubic-bezier(.34,1.56,.64,1) both;
+    }
+    .encourage-fist {
+      position:absolute; bottom:-16px; left:50%;
+      transform:translateX(-50%); font-size:1.1rem; z-index:4;
+      animation:fistPump 1s ease-in-out infinite;
+    }
+    @keyframes fistPump {
+      0%,100% { transform:translateX(-50%) translateY(0) }
+      40%     { transform:translateX(-50%) translateY(-8px) }
+      60%     { transform:translateX(-50%) translateY(-5px) }
+    }
+    .rdog.playing svg { animation:dplay .28s ease-in-out infinite alternate; }
+    @keyframes dplay { from{transform:translateY(-5px) scale(1.12) rotate(-9deg)} to{transform:translateY(4px) scale(.9) rotate(9deg)} }
+    .person-avatar {
+      width: 48px; height: 48px; border-radius: 50%; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: .95rem; font-weight: 700; color: #fff;
+    }
+    .person-info { flex: 1; min-width: 0; }
+    .person-name  { font-weight: 700; font-size: 1rem; margin-bottom: 5px; }
+    .person-meta  { display: flex; flex-wrap: wrap; gap: 6px; }
+    .person-chip  { font-size: .68rem; font-weight: 500; padding: 2px 8px; border-radius: 10px; background: var(--faint); color: var(--muted); }
+    .person-chip.active   { background: var(--red-bg);   color: var(--red);    border: 1px solid var(--red-br); }
+    .person-chip.complete { background: var(--green-bg); color: var(--green);  border: 1px solid var(--green-br); }
+    .person-chip.revision { background: #fff7ed;         color: var(--orange); border: 1px solid rgba(234,88,12,.2); }
+    .person-chip.delivered{ background: var(--green-bg); color: var(--green);  border: 1px solid var(--green-br); }
+
+    /* ── COLOR PICKER ── */
+    .color-picker { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+    .color-swatch {
+      width: 30px; height: 30px; border-radius: 50%; cursor: pointer;
+      border: 3px solid transparent; transition: all .15s;
+    }
+    .color-swatch.selected { border-color: var(--text); transform: scale(1.1); }
+
+    /* ── AVAILABILITY STATUS ── */
+    .avail-chip { display:inline-flex; align-items:center; gap:4px; padding:3px 9px; border-radius:10px; font-size:.65rem; font-weight:600; }
+    .avail-chip.available { background:var(--green-bg); color:var(--green); border:1px solid var(--green-br); }
+    .avail-chip.full { background:#fff7ed; color:var(--orange); border:1px solid rgba(234,88,12,.2); }
+    .avail-dot { width:6px; height:6px; border-radius:50%; background:currentColor; flex-shrink:0; }
+
+    /* ── AVAILABILITY TOGGLE in projects header ── */
+    .avail-toggle-row { display:flex; align-items:center; gap:10px; padding:11px 14px; background:var(--white); border:1px solid var(--border); border-radius:10px; margin-bottom:14px; }
+    .avail-toggle-label { font-size:.78rem; font-weight:500; color:var(--muted); flex:1; }
+    .avail-toggle-btn { padding:5px 14px; border-radius:20px; font-size:.72rem; font-weight:600; cursor:pointer; transition:all .2s; }
+    .avail-toggle-btn.available { background:var(--green-bg); color:var(--green); border:1.5px solid var(--green-br); }
+    .avail-toggle-btn.full { background:#fff7ed; color:var(--orange); border:1.5px solid rgba(234,88,12,.2); }
+
+    /* ── WORKER PICKER in modal ── */
+    .worker-picker { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px; }
+    .worker-pill { padding:6px 13px; border-radius:20px; border:1.5px solid var(--border); background:none; font-family:'DM Sans',sans-serif; font-size:.78rem; font-weight:500; color:var(--muted); cursor:pointer; display:flex; align-items:center; gap:6px; transition:all .2s; }
+    .worker-pill:hover { border-color:var(--text); color:var(--text); }
+    .worker-pill.selected { border-color:var(--blue); background:var(--blue-bg); color:var(--blue); font-weight:600; }
+    .worker-pill-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+    .worker-pill:disabled, .worker-pill.disabled-pill { opacity:.38; cursor:not-allowed; }
+
+    /* ── TASK STATUS & RESPONSE ── */
+    .task-status { display:inline-flex; align-items:center; gap:3px; font-size:.6rem; font-weight:600; border-radius:4px; padding:2px 7px; margin-top:4px; }
+    .task-status.pending  { background:#fffbeb; color:#92400e; border:1px solid rgba(146,64,14,.2); }
+    .task-status.accepted { background:var(--green-bg); color:var(--green); border:1px solid var(--green-br); }
+    .task-status.declined { background:var(--red-bg); color:var(--red); border:1px solid var(--red-br); }
+    .task-resp-btns { display:flex; gap:5px; margin-top:7px; }
+    .accept-btn  { padding:4px 11px; border-radius:6px; font-family:'DM Sans',sans-serif; font-size:.68rem; font-weight:600; background:var(--green); color:#fff; border:none; cursor:pointer; transition:opacity .2s; }
+    .accept-btn:hover { opacity:.85; }
+    .decline-btn { padding:4px 11px; border-radius:6px; font-family:'DM Sans',sans-serif; font-size:.68rem; font-weight:600; background:none; color:var(--red); border:1.5px solid var(--red-br); cursor:pointer; transition:all .2s; }
+    .decline-btn:hover { background:var(--red-bg); }
+
+    /* ── REMOVE BTN on person card ── */
+    .person-remove {
+      background: none; border: none; padding: 6px 8px; border-radius: 7px;
+      font-size: .78rem; color: rgba(17,17,17,.2); cursor: pointer; transition: all .2s; line-height: 1; flex-shrink: 0;
+    }
+    .person-remove:hover { background: var(--red-bg); color: var(--red); }
+
+    /* ── PROJECT COLLAB & ACTIONS ── */
+    .collab-row { display: flex; align-items: center; gap: 6px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); flex-wrap: wrap; }
+    .collab-label { font-size: .68rem; color: var(--muted); font-weight: 500; }
+    .collab-avatar { width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: .54rem; font-weight: 700; color: #fff; cursor: default; position: relative; }
+    .collab-remove { position: absolute; inset: -3px; border-radius: 50%; background: rgba(0,0,0,.45); color: #fff; font-size: .6rem; display: none; align-items: center; justify-content: center; cursor: pointer; }
+    .collab-avatar:hover .collab-remove { display: flex; }
+    .proj-action-row { display: flex; gap: 6px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
+    .proj-act-btn {
+      display: flex; align-items: center; gap: 5px;
+      background: none; border: 1px solid var(--border); border-radius: 20px;
+      padding: 4px 11px; font-size: .7rem; font-weight: 500; color: var(--muted);
+      cursor: pointer; transition: all .2s;
+    }
+    .proj-act-btn:hover { border-color: var(--text); color: var(--text); background: var(--faint); }
+
+    /* ── MEMBER PICKER inside modal ── */
+    .member-pick-grid { display: flex; flex-direction: column; gap: 6px; margin-bottom: 4px; }
+    .member-pick-btn {
+      display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+      border: 1.5px solid var(--border); border-radius: 9px; background: none; cursor: pointer; transition: all .2s; text-align: left;
+    }
+    .member-pick-btn:hover { border-color: var(--text); background: var(--faint); }
+    .member-pick-btn.selected { border-color: var(--blue); background: var(--blue-bg); }
+    .member-pick-avatar { width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: .7rem; font-weight: 700; color: #fff; }
+    .member-pick-name { font-size: .85rem; font-weight: 500; color: var(--text); }
+
+    /* ── INCOMING REQUESTS ── */
+    .incoming-section-label { font-size:.65rem; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--orange); margin-bottom:8px; display:flex; align-items:center; gap:8px; }
+    .incoming-section-label::after { content:''; flex:1; height:1px; background:rgba(234,88,12,.2); }
+    .incoming-card { background:#fff7ed; border:1px solid rgba(234,88,12,.25); border-radius:12px; padding:14px 16px; margin-bottom:8px; }
+    .incoming-card-title { font-size:.78rem; font-weight:500; color:var(--muted); margin-bottom:4px; }
+    .incoming-card-name  { font-size:.95rem; font-weight:700; margin-bottom:10px; }
+    .incoming-card-btns  { display:flex; gap:8px; }
+    .incoming-confirm-row { background:rgba(234,88,12,.06); border-radius:8px; padding:9px 12px; margin-top:8px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+    .incoming-confirm-label { font-size:.72rem; font-weight:500; color:var(--orange); flex:1; }
+
+    /* ── PROJECTS VIEW ── */
+    .projects-grid { display: flex; flex-direction: column; gap: 10px; }
+    .project-card  { background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px; cursor: pointer; transition: all .2s; }
+    .project-card:hover { border-color: rgba(17,17,17,.22); box-shadow: 0 2px 12px rgba(0,0,0,.06); }
+    .project-card.complete  { border-color: var(--green-br); }
+    .project-card.delivered { border-color: var(--green-br); opacity: .78; }
+    .project-card.delivered:hover { opacity: 1; border-color: var(--green); }
+    .project-card-main { display: flex; align-items: center; gap: 16px; }
+
+    .ring-wrap { position: relative; width: 52px; height: 52px; flex-shrink: 0; }
+    .ring-wrap svg { transform: rotate(-90deg); }
+    .ring-bg   { fill: none; stroke: #E02424; stroke-width: 3.5; }
+    .ring-fill { fill: none; stroke: var(--blue); stroke-width: 3.5; stroke-linecap: round; transition: stroke-dashoffset .5s; }
+    .ring-pct  { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: .72rem; font-weight: 700; }
+
+    .project-info        { flex: 1; min-width: 0; }
+    .project-name        { font-weight: 600; font-size: .95rem; margin-bottom: 4px; display: flex; align-items: center; flex-wrap: wrap; gap: 2px; }
+    .project-detail      { font-size: .72rem; color: var(--muted); }
+    .project-meta-row    { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; margin-top: 5px; }
+    .project-owner-chip  { display: inline-flex; align-items: center; gap: 4px; font-size: .63rem; font-weight: 600; padding: 2px 7px; border-radius: 8px; }
+    .project-owner-dot   { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+    .project-date-chip   { font-size: .63rem; color: var(--muted); font-weight: 500; }
+    .project-card-actions{ display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+    .icon-btn { background: none; border: none; padding: 6px; border-radius: 6px; cursor: pointer; font-size: .95rem; color: rgba(17,17,17,.25); transition: all .2s; line-height: 1; }
+    .icon-btn:hover { background: var(--red-bg); color: var(--red); }
+
+    /* Release row */
+    .release-row   { display: flex; align-items: center; gap: 10px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
+    .release-label { font-size: .75rem; font-weight: 500; color: var(--muted); flex: 1; }
+    .release-toggle {
+      display: flex; align-items: center; gap: 6px;
+      background: var(--red); border: 1.5px solid var(--red); border-radius: 20px;
+      padding: 4px 12px; font-size: .72rem; font-weight: 600; color: #fff;
+      cursor: pointer; transition: all .2s; flex-shrink: 0;
+    }
+    .release-toggle:hover { opacity: .85; }
+    .release-toggle.approved { background: var(--green); border-color: var(--green); }
+    .release-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+    .revision-btn {
+      display: flex; align-items: center; gap: 5px;
+      background: none; border: 1.5px solid var(--orange); border-radius: 20px;
+      padding: 4px 12px; font-size: .72rem; font-weight: 600; color: var(--orange);
+      cursor: pointer; transition: all .2s; flex-shrink: 0;
+    }
+    .revision-btn:hover { background: var(--orange); color: #fff; }
+
+    /* Delivered section divider */
+    .section-divider { display: flex; align-items: center; gap: 12px; margin: 28px 0 14px; font-size: .68rem; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+    .section-divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+    .divider-count { background: var(--green); color: #fff; font-size: .6rem; font-weight: 700; border-radius: 10px; padding: 1px 7px; }
+
+    /* ── MASTER / OVERVIEW VIEW ── */
+    .master-tabs { display:flex; gap:0; background:var(--faint); border:1px solid var(--border); border-radius:11px; padding:3px; margin-bottom:20px; }
+    .master-tab  { flex:1; padding:8px 0; border:none; border-radius:8px; background:none; font-size:.8rem; font-weight:600; color:var(--muted); cursor:pointer; font-family:'DM Sans',sans-serif; transition:all .18s; }
+    .master-tab.active { background:#fff; color:var(--text); box-shadow:0 1px 5px rgba(0,0,0,.09); }
+
+    .summary-bar { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:18px; }
+    .summary-chip { flex:1; min-width:80px; background:#fff; border:1px solid var(--border); border-radius:12px; padding:12px 14px; text-align:center; }
+    .summary-chip-val { font-size:1.4rem; font-weight:800; color:var(--text); line-height:1; }
+    .summary-chip-lbl { font-size:.61rem; font-weight:600; text-transform:uppercase; letter-spacing:.07em; color:var(--muted); margin-top:3px; }
+
+    .master-card { background:#fff; border:1px solid var(--border); border-radius:14px; padding:16px 18px; margin-bottom:14px; }
+    .master-card-header { display:flex; align-items:center; gap:12px; margin-bottom:12px; }
+    .master-avatar { width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:.75rem; font-weight:700; color:#fff; flex-shrink:0; }
+    .master-name { font-size:.95rem; font-weight:700; line-height:1.2; }
+    .master-sub  { font-size:.7rem; color:var(--muted); margin-top:2px; }
+
+    .master-stats { display:flex; gap:0; margin-bottom:12px; background:var(--faint); border-radius:10px; padding:10px 0; }
+    .master-stat  { flex:1; text-align:center; border-right:1px solid var(--border); }
+    .master-stat:last-child { border-right:none; }
+    .master-stat-val { font-size:1.1rem; font-weight:800; color:var(--text); line-height:1; }
+    .master-stat-lbl { font-size:.58rem; font-weight:600; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin-top:3px; }
+
+    .master-proj-row { display:flex; align-items:center; gap:10px; padding:9px 0; border-top:1px solid rgba(17,17,17,.06); }
+    .master-proj-dot  { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+    .master-proj-name { font-size:.8rem; font-weight:600; flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .master-proj-role { font-size:.62rem; color:var(--muted); white-space:nowrap; }
+    .master-proj-pct  { font-size:.76rem; font-weight:700; white-space:nowrap; min-width:34px; text-align:right; }
+    .master-bar-wrap  { flex:2; height:5px; background:rgba(17,17,17,.08); border-radius:3px; overflow:hidden; min-width:40px; }
+    .master-bar-fill  { height:100%; border-radius:3px; transition:width .4s; }
+
+    /* Project box (inside person card) */
+    .proj-box        { background:var(--faint); border-radius:10px; border-left:3px solid #ddd; padding:10px 13px; margin-top:9px; }
+    .proj-box:first-of-type { margin-top:12px; }
+    .proj-box-header { display:flex; align-items:center; gap:8px; }
+    .proj-box-name   { font-size:.82rem; font-weight:700; flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .proj-box-role   { font-size:.6rem; font-weight:600; color:var(--muted); background:#fff; border:1px solid var(--border); border-radius:5px; padding:2px 7px; white-space:nowrap; }
+    .proj-box-bar    { flex:2; height:5px; background:rgba(17,17,17,.09); border-radius:3px; overflow:hidden; min-width:50px; }
+    .proj-box-fill   { height:100%; border-radius:3px; }
+    .proj-box-pct    { font-size:.76rem; font-weight:700; white-space:nowrap; min-width:32px; text-align:right; }
+    .proj-box-meta   { font-size:.61rem; color:var(--muted); margin-top:5px; display:flex; gap:10px; flex-wrap:wrap; }
+    .proj-box-meta strong { color:var(--text); font-weight:600; }
+
+    /* Assignment sub-block */
+    .ma-block       { background:#fff; border:1px solid rgba(17,17,17,.08); border-radius:8px; padding:9px 11px; margin-top:7px; }
+    .ma-hd          { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+    .ma-title       { font-size:.57rem; font-weight:700; text-transform:uppercase; letter-spacing:.07em; color:var(--muted); }
+    .ma-total       { font-size:.6rem; color:var(--muted); background:var(--faint); border:1px solid var(--border); border-radius:4px; padding:1px 7px; }
+    .ma-scroll      { max-height:220px; overflow-y:auto; scrollbar-width:thin; display:flex; flex-direction:column; gap:0; }
+    .ma-person      { padding:7px 0; border-top:1px solid rgba(17,17,17,.05); }
+    .ma-person:first-child { padding-top:0; border-top:none; }
+    .ma-person-hd   { display:flex; align-items:center; gap:6px; margin-bottom:5px; }
+    .ma-dot         { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+    .ma-person-name { font-size:.72rem; font-weight:700; color:var(--text); flex:1; }
+    .ma-count       { font-size:.6rem; background:var(--faint); border:1px solid var(--border); border-radius:4px; padding:1px 7px; color:var(--muted); white-space:nowrap; }
+    .ma-person-body { margin-left:14px; display:flex; flex-direction:column; gap:4px; }
+    .ma-sec         { display:flex; gap:0; flex-direction:column; }
+    .ma-sec-lbl     { font-size:.57rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin-bottom:2px; }
+    .ma-task-list   { display:flex; flex-direction:column; gap:1px; margin-bottom:2px; }
+    .ma-task        { display:flex; align-items:baseline; gap:5px; font-size:.69rem; color:var(--muted); padding:2px 6px; border-left:2px solid rgba(17,17,17,.08); line-height:1.4; }
+    .ma-task.done   { color:var(--text); border-left-color:var(--green); }
+    .ma-task-dot    { display:none; }
+    .ma-task.done::before { content:'✓'; color:var(--green); font-weight:700; font-size:.65rem; flex-shrink:0; margin-right:1px; }
+    .mt-block  { display:flex; align-items:center; gap:7px; background:#fff; border:1px solid rgba(17,17,17,.07); border-radius:8px; padding:7px 10px; margin-top:6px; flex-wrap:wrap; }
+    .mt-label  { font-size:.67rem; color:var(--muted); }
+    .mt-label strong { color:var(--text); font-weight:600; }
+    .mt-dates  { font-size:.61rem; color:var(--muted); background:var(--faint); border-radius:4px; padding:2px 7px; white-space:nowrap; }
+    .mt-pending{ font-size:.67rem; color:var(--orange); font-weight:600; }
+
+    .sec-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:7px 12px; margin-top:12px; padding-top:12px; border-top:1px solid rgba(17,17,17,.06); }
+    .sec-row  { display:flex; flex-direction:column; gap:3px; }
+    .sec-row-top { display:flex; justify-content:space-between; align-items:baseline; }
+    .sec-name { font-size:.6rem; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .sec-pct  { font-size:.6rem; font-weight:700; color:var(--text); }
+    .sec-bar  { height:4px; background:rgba(17,17,17,.08); border-radius:2px; overflow:hidden; }
+    .sec-fill { height:100%; border-radius:2px; background:var(--blue); }
+    .sec-fill.done { background:var(--green); }
+
+    .proj-team-row { display:flex; gap:5px; flex-wrap:wrap; align-items:center; margin-top:8px; }
+    .proj-team-chip { display:flex; align-items:center; gap:4px; background:var(--faint); border:1px solid var(--border); border-radius:20px; padding:3px 8px 3px 4px; font-size:.68rem; font-weight:500; }
+    .proj-team-dot  { width:16px; height:16px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:.5rem; font-weight:700; color:#fff; }
+    .proj-ring-wrap { position:relative; width:52px; height:52px; flex-shrink:0; }
+    .proj-ring-pct  { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:.68rem; font-weight:800; color:var(--text); }
+    .proj-meta-row  { display:flex; gap:12px; flex-wrap:wrap; margin-top:6px; }
+    .proj-meta-item { font-size:.69rem; color:var(--muted); display:flex; align-items:center; gap:3px; }
+    .proj-meta-item strong { color:var(--text); font-weight:600; }
+    .ring-bg-ov  { fill:none; stroke:rgba(224,36,36,.15); stroke-width:4; }
+    .ring-fill-ov{ fill:none; stroke:var(--blue); stroke-width:4; stroke-linecap:round; transform:rotate(-90deg); transform-origin:50% 50%; transition:stroke-dashoffset .5s; }
+    .ring-fill-ov.done { stroke:var(--green); }
+
+    /* ── TRASH VIEW ── */
+    .trash-empty { text-align: center; padding: 48px 20px; color: var(--muted); font-size: .85rem; }
+    .trash-card  { background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; margin-bottom: 10px; }
+    .trash-card-top  { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
+    .trash-card-name { font-size: .88rem; font-weight: 600; color: var(--text); line-height: 1.35; }
+    .trash-card-meta { font-size: .7rem; color: var(--muted); margin-top: 2px; }
+    .trash-card-expiry { font-size: .68rem; font-weight: 600; white-space: nowrap; padding: 3px 8px; border-radius: 20px; }
+    .expiry-ok   { background: var(--green-bg); color: var(--green); }
+    .expiry-soon { background: #fff7ed; color: var(--orange); }
+    .expiry-dead { background: var(--red-bg); color: var(--red); }
+    .trash-card-btns { display: flex; gap: 8px; margin-top: 10px; }
+    .trash-restore-btn { padding: 6px 14px; border-radius: 8px; border: 1.5px solid rgba(22,163,74,.35); background: var(--green-bg); color: var(--green); font-size: .74rem; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+    .trash-delete-btn  { padding: 6px 14px; border-radius: 8px; border: 1.5px solid var(--red-br); background: var(--red-bg); color: var(--red); font-size: .74rem; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+    .trash-btn-sm { padding: 4px 10px; border-radius: 7px; border: 1.5px solid var(--border); background: none; color: var(--muted); font-size: .68rem; font-weight: 500; cursor: pointer; font-family: 'DM Sans', sans-serif; margin-left: auto; }
+    .trash-header-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+
+    /* ── SECTIONS VIEW ── */
+    .complete-banner { display: none; align-items: center; justify-content: center; gap: 8px; background: var(--green-bg); border: 1px solid var(--green-br); border-radius: 12px; padding: 14px 18px; margin-bottom: 16px; font-size: .9rem; font-weight: 600; color: var(--green); }
+    .preview-banner  { display: flex; align-items: center; gap: 8px; background: #fff7ed; border: 1px solid rgba(234,88,12,.25); border-radius: 12px; padding: 12px 16px; margin-bottom: 16px; font-size: .8rem; font-weight: 500; color: var(--orange); }
+    .preview-banner strong { font-weight: 700; }
+    .chart-card  { background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 18px 18px 14px; margin-bottom: 16px; }
+    .chart-title { font-size: .65rem; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-bottom: 14px; }
+    .chart-row   { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .chart-row:last-child { margin-bottom: 0; }
+    .chart-label    { font-size: .74rem; font-weight: 500; color: var(--muted); width: 104px; flex-shrink: 0; }
+    .chart-bar-wrap { flex: 1; height: 7px; background: rgba(224,36,36,.2); border-radius: 4px; overflow: hidden; }
+    .chart-bar-fill { height: 100%; border-radius: 4px; background: var(--blue); transition: width .5s cubic-bezier(.25,.46,.45,.94); }
+    .chart-pct  { font-size: .7rem; font-weight: 700; color: var(--muted); width: 44px; text-align: right; flex-shrink: 0; }
+    .chart-pct.done { color: var(--green); }
+    .chart-pct.zero { color: var(--red); }
+    .sections-grid  { display: flex; flex-direction: column; gap: 8px; }
+    .section-card   { background: var(--white); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; cursor: pointer; display: flex; flex-direction: column; gap: 0; transition: all .2s; }
+    .section-card:hover { border-color: rgba(17,17,17,.22); box-shadow: 0 2px 8px rgba(0,0,0,.05); }
+    .section-card.done { border-color: var(--green-br); background: var(--green-bg); }
+    .section-card.zero { border-color: var(--red-br); }
+    .section-card-top   { display: flex; align-items: center; justify-content: space-between; }
+    .section-card-left  { flex: 1; }
+    .section-card-name  { font-weight: 600; font-size: .9rem; margin-bottom: 4px; }
+    .section-check      { color: var(--green); font-size: .78rem; margin-left: 4px; }
+    .section-card-detail{ font-size: .7rem; color: var(--muted); }
+    .section-card-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+    .section-mini-bar   { width: 60px; height: 4px; background: rgba(224,36,36,.2); border-radius: 2px; overflow: hidden; }
+    .section-mini-fill  { height: 100%; border-radius: 2px; background: var(--blue); transition: width .4s; }
+
+    /* Section team row */
+    .section-team-row { display: flex; align-items: center; gap: 6px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); flex-wrap: wrap; }
+    .sec-team-avatar  { width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: .5rem; font-weight: 700; color: #fff; position: relative; }
+    .sec-team-label   { font-size: .6rem; font-weight: 600; color: var(--muted); background: var(--faint); border-radius: 3px; padding: 1px 5px; }
+    .sec-act-btn      { display: flex; align-items: center; gap: 4px; background: none; border: 1px solid var(--border); border-radius: 20px; padding: 3px 9px; font-size: .62rem; font-weight: 500; color: var(--muted); cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all .2s; }
+    .sec-act-btn:hover { border-color: var(--text); color: var(--text); background: var(--faint); }
+    .sec-act-btn.handoff { border-color: var(--blue-br); color: var(--blue); background: var(--blue-bg); }
+    .sec-act-btn.assist  { border-color: rgba(22,163,74,.25); color: var(--green); background: var(--green-bg); }
+
+    /* Section owner banner in items view */
+    .section-owner-banner { display: flex; align-items: center; gap: 8px; padding: 9px 13px; border-radius: 9px; margin-bottom: 8px; font-size: .75rem; font-weight: 500; flex-wrap: wrap; }
+    .section-owner-banner.accepted { background: var(--green-bg); color: var(--green); border: 1px solid var(--green-br); }
+    .section-owner-banner.pending  { background: #fffbeb; color: #92400e; border: 1px solid rgba(146,64,14,.2); flex-direction: column; align-items: flex-start; gap: 7px; }
+    .section-owner-banner.waiting  { background: #fff7ed; color: var(--orange); border: 1px solid rgba(234,88,12,.2); }
+
+    /* Inline confirm */
+    .inline-confirm { align-items: center; background: var(--faint); border-radius: 8px; padding: 7px 10px; gap: 8px; }
+    .confirm-label  { font-size: .7rem; font-weight: 500; color: var(--muted); flex: 1; }
+    .sec-pending-label { font-size: .68rem; font-weight: 500; color: var(--muted); }
+    .sec-confirm-row   { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+
+    /* ── ITEMS VIEW ── */
+    .linked-note { display: flex; align-items: center; gap: 6px; font-size: .7rem; color: var(--muted); background: var(--faint); border-radius: 8px; padding: 8px 12px; margin-bottom: 10px; }
+    .state-legend { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; padding: 7px 12px; background: var(--white); border: 1px solid var(--border); border-radius: 8px; }
+    .legend-item { display: flex; align-items: center; gap: 5px; font-size: .63rem; color: var(--muted); font-weight: 500; white-space: nowrap; }
+    .legend-strip { width: 12px; height: 12px; border-radius: 3px; border-left: 3px solid transparent; flex-shrink: 0; }
+    .items-list { display: flex; flex-direction: column; gap: 7px; }
+    .item-row {
+      background: var(--faint); border: 1px solid var(--border);
+      border-left: 3.5px solid rgba(17,17,17,.18); border-radius: 10px; padding: 13px 14px;
+      display: flex; align-items: flex-start; gap: 12px; transition: border-color .15s;
+    }
+    .item-row.state-pending  { background: #fffbeb;        border-color: rgba(146,64,14,.15); border-left-color: #f59e0b; }
+    .item-row.state-accepted { background: var(--blue-bg); border-color: var(--blue-br);      border-left-color: var(--blue); }
+    .item-row.state-declined { background: var(--red-bg);  border-color: var(--red-br);       border-left-color: var(--red); }
+    .item-row.done           { background: var(--green-bg);border-color: var(--green-br);      border-left-color: var(--green); opacity: .78; }
+    .item-row.done .item-text { text-decoration: line-through; color: var(--muted); }
+    .checkbox { width: 22px; height: 22px; border-radius: 7px; flex-shrink: 0; margin-top: 1px; border: 2px solid rgba(17,17,17,.2); background: var(--white); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all .2s; }
+    .item-row.state-pending  .checkbox { border-color: #f59e0b; }
+    .item-row.state-accepted .checkbox { border-color: var(--blue); }
+    .item-row.state-declined .checkbox { border-color: var(--red); }
+    .checkbox.checked { background: var(--green); border-color: var(--green); }
+    .checkbox svg { display: none; }
+    .checkbox.checked svg { display: block; }
+    .item-body    { flex: 1; min-width: 0; }
+    .item-text    { font-size: .88rem; font-weight: 500; line-height: 1.35; word-break: break-word; color: var(--text); }
+    .worker-badge { display: inline-flex; align-items: center; gap: 3px; font-size: .65rem; font-weight: 500; color: var(--muted); background: var(--faint); border-radius: 4px; padding: 2px 6px; margin-top: 5px; }
+    .item-meta    { font-size: .65rem; color: var(--muted); margin-top: 4px; }
+    .item-meta .by{ color: var(--green); font-weight: 500; }
+    .item-actions { display: flex; gap: 2px; flex-shrink: 0; }
+    .item-icon-btn{ background: none; border: none; padding: 5px; border-radius: 5px; cursor: pointer; font-size: .82rem; color: rgba(17,17,17,.2); transition: all .2s; line-height: 1; }
+    .item-icon-btn:hover { background: var(--faint); color: var(--text); }
+    .item-icon-btn.del:hover { background: var(--red-bg); color: var(--red); }
+
+    /* ── MODAL ── */
+    .modal-overlay { position: fixed; inset: 0; z-index: 999; background: rgba(0,0,0,.38); backdrop-filter: blur(4px); display: none; align-items: flex-end; justify-content: center; }
+    .modal-overlay.open { display: flex; }
+    @media (min-width: 580px) { .modal-overlay { align-items: center; padding: 24px; } }
+    .modal       { background: var(--white); width: 100%; max-width: 420px; border-radius: 20px 20px 0 0; padding: 24px 22px 36px; }
+    @media (min-width: 580px) { .modal { border-radius: 16px; padding: 28px 24px; } }
+    .modal-title { font-size: 1rem; font-weight: 600; margin-bottom: 4px; }
+    .modal-hint  { font-size: .72rem; color: var(--muted); margin-bottom: 16px; }
+    .modal-input { width: 100%; padding: 12px 14px; border: 1.5px solid var(--border); border-radius: 9px; font-family: 'DM Sans'; font-size: .9rem; color: var(--text); background: var(--bg); outline: none; margin-bottom: 10px; transition: border-color .2s; }
+    .modal-input:focus { border-color: var(--text); }
+    .modal-actions { display: flex; gap: 10px; margin-top: 4px; }
+    .btn-cancel  { flex: 1; padding: 11px; border: 1.5px solid var(--border); border-radius: 9px; background: none; font-size: .85rem; font-weight: 500; color: var(--muted); cursor: pointer; }
+    .btn-save    { flex: 2; padding: 11px; border: none; border-radius: 9px; background: var(--text); font-size: .85rem; font-weight: 600; color: #fff; cursor: pointer; }
+
+    .toast { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(70px); background: var(--text); color: #fff; padding: 9px 20px; border-radius: 20px; font-size: .78rem; font-weight: 500; z-index: 9999; pointer-events: none; white-space: nowrap; transition: transform .28s cubic-bezier(.25,.46,.45,.94); }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+
+    /* ── PIN MODAL ── */
+    .pin-avatar      { width:64px; height:64px; border-radius:50%; margin:0 auto 10px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; font-weight:700; color:#fff; }
+    .pin-person-name { font-size:1rem; font-weight:700; text-align:center; margin-bottom:3px; }
+    .pin-mode-label  { font-size:.75rem; color:var(--muted); text-align:center; margin-bottom:18px; }
+    .pin-dots        { display:flex; justify-content:center; gap:14px; margin-bottom:6px; }
+    .pin-dot         { width:14px; height:14px; border-radius:50%; border:2px solid rgba(17,17,17,.22); transition:all .15s; }
+    .pin-dot.filled  { background:var(--text); border-color:var(--text); transform:scale(1.1); }
+    .pin-error       { text-align:center; font-size:.72rem; color:var(--red); min-height:1.2em; margin:6px 0; }
+    .pin-numpad      { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin:12px 0 8px; }
+    .pin-numpad button { padding:14px 8px; border:1.5px solid var(--border); border-radius:11px; background:#fff; font-family:'DM Sans',sans-serif; font-size:1.1rem; font-weight:600; color:var(--text); cursor:pointer; transition:all .15s; }
+    .pin-numpad button:hover  { background:var(--faint); border-color:rgba(17,17,17,.22); }
+    .pin-numpad button:active { background:rgba(17,17,17,.1); transform:scale(.96); }
+    .pin-numpad .pin-forgot-key { font-size:.7rem; font-weight:500; color:var(--blue); border-color:transparent; background:none; }
+    .pin-numpad .pin-back-key   { font-size:1.3rem; }
+    .pin-change-row  { display:flex; align-items:center; gap:10px; padding:11px 14px; background:var(--white); border:1px solid var(--border); border-radius:10px; margin-bottom:14px; }
+    .pin-change-btn  { padding:5px 14px; border-radius:20px; font-size:.72rem; font-weight:600; cursor:pointer; transition:all .2s; background:none; border:1.5px solid var(--border); color:var(--muted); font-family:'DM Sans',sans-serif; }
+    .pin-change-btn:hover { border-color:var(--text); color:var(--text); }
+
+    /* ── PENDING APPROVALS ── */
+    .pending-section-label { font-size:.65rem; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--blue); margin:20px 0 8px; display:flex; align-items:center; gap:8px; }
+    .pending-section-label::after { content:''; flex:1; height:1px; background:var(--blue-br); }
+    .pending-card { background:var(--blue-bg); border:1px solid var(--blue-br); border-radius:12px; padding:14px 16px; margin-bottom:8px; }
+    .pending-card-name  { font-size:.95rem; font-weight:700; margin-bottom:2px; }
+    .pending-card-email { font-size:.72rem; color:var(--muted); margin-bottom:10px; }
+    .pending-card-btns  { display:flex; gap:8px; }
+    .pending-card-date  { font-size:.65rem; color:var(--muted); margin-bottom:8px; }
+
+    /* ── LOGIN ── */
+    #login-screen { position:fixed; inset:0; z-index:9998; background:var(--bg); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:32px 24px; }
+    .login-logo { font-size:2rem; font-weight:700; letter-spacing:.12em; margin-bottom:4px; }
+    .login-tagline { font-size:.68rem; font-weight:500; letter-spacing:.22em; text-transform:uppercase; color:var(--muted); margin-bottom:52px; }
+    .login-card { background:var(--white); border:1px solid var(--border); border-radius:16px; padding:32px 28px; width:100%; max-width:360px; text-align:center; }
+    .login-card-title { font-size:1.15rem; font-weight:600; margin-bottom:6px; }
+    .login-card-desc  { font-size:.82rem; color:var(--muted); margin-bottom:28px; line-height:1.55; }
+    .btn-google { display:flex; align-items:center; justify-content:center; gap:10px; width:100%; padding:13px 20px; background:var(--white); border:1.5px solid var(--border); border-radius:10px; font-size:.88rem; font-weight:500; color:var(--text); cursor:pointer; transition:all .2s; font-family:'DM Sans',sans-serif; }
+    .btn-google:hover { border-color:rgba(17,17,17,.28); box-shadow:0 2px 10px rgba(0,0,0,.08); }
+    .login-err { margin-top:14px; padding:10px 16px; background:#fef2f2; border:1px solid #fecaca; border-radius:8px; color:#dc2626; font-size:.78rem; display:none; text-align:left; }
+  </style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-logo">BAE</div>
+  <div class="login-tagline">Design Tracker</div>
+  <div class="login-card">
+    <div class="login-card-title">Team Access</div>
+    <div class="login-card-desc">Sign in with your @bangunasaecos.com Google account to continue.</div>
+    <button class="btn-google" onclick="doSignIn()">
+      <svg viewBox="0 0 48 48" width="18" height="18"><path fill="#4285F4" d="M44.5 20H24v8.5h11.8C34.7 33.9 29.8 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 4.1 29.6 2 24 2 11.8 2 2 11.8 2 24s9.8 22 22 22c11 0 21-8 21-21 0-1.3-.2-2.7-.5-4z"/></svg>
+      Sign in with Google
+    </button>
+    <div class="login-err" id="login-err"></div>
+  </div>
+</div>
+
+<div id="header">
+  <div class="header-left">
+    <button id="back-btn" onclick="goBack()">← Back</button>
+    <div class="header-brand-wrap">
+      <img src="../04 - Aset & Logo/BAE LOGO BLACK.png" class="header-logo" alt="BAE">
+      <div class="header-brand-text">
+        <span class="header-brand">Tracker</span>
+        <span class="header-sub">for Design</span>
+      </div>
+    </div>
+  </div>
+  <div class="header-right" id="header-right"></div>
+</div>
+
+<main>
+  <!-- PEOPLE -->
+  <div id="view-people">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px">
+      <div class="view-title">Team</div>
+      <button id="overview-btn" onclick="navMaster()" style="background:none;border:1.5px solid var(--border);border-radius:9px;padding:5px 12px;font-size:.72rem;color:var(--muted);cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600">🔒 Overview</button>
+    </div>
+    <div class="view-sub">Select a team member to sign in</div>
+    <button class="add-btn" onclick="openJoinModal()">+ Request to Join</button>
+    <div class="people-grid" id="people-grid"></div>
+    <div id="pending-approvals-section"></div>
+  </div>
+
+  <!-- PROJECTS -->
+  <div id="view-projects" style="display:none">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px">
+      <div class="view-title" id="projects-title">Projects</div>
+      <button id="trash-nav-btn" onclick="navTrash()" style="background:none;border:1.5px solid var(--border);border-radius:9px;padding:5px 11px;font-size:.72rem;color:var(--muted);cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:5px">🗑 Trash <span id="trash-badge" style="display:none;background:var(--red);color:#fff;font-size:.6rem;font-weight:700;border-radius:10px;padding:1px 6px;margin-left:2px"></span></button>
+    </div>
+    <div class="view-sub" id="projects-sub"></div>
+    <div class="avail-toggle-row" id="avail-toggle-row" style="display:none">
+      <span class="avail-toggle-label">My availability</span>
+      <button class="avail-toggle-btn" id="avail-toggle-btn" onclick="toggleAvailability()"></button>
+    </div>
+    <div class="pin-change-row" id="pin-change-row" style="display:none">
+      <span class="avail-toggle-label" style="font-size:.72rem">🔑 Account PIN</span>
+      <button class="pin-change-btn" onclick="openChangePinModal()">Change PIN</button>
+    </div>
+    <div id="incoming-section"></div>
+    <button class="add-btn" onclick="openNewProjectModal()">+ Add New Project</button>
+    <div class="projects-grid" id="projects-grid"></div>
+    <div id="delivered-section" style="display:none">
+      <div class="section-divider">
+        Delivered <span class="divider-count" id="delivered-count"></span><span></span>
+      </div>
+      <div class="projects-grid" id="delivered-grid"></div>
+    </div>
+  </div>
+
+  <!-- SECTIONS -->
+  <div id="view-sections" style="display:none">
+    <div class="view-title" id="sections-title"></div>
+    <div class="prog-bar-wrap">
+      <div class="prog-bar"><div class="prog-bar-fill" id="sections-bar" style="width:0%"></div></div>
+      <div class="prog-label" id="sections-pct">0%</div>
+    </div>
+    <div class="complete-banner" id="complete-banner">🎉 Project 100% Complete!</div>
+    <div id="sections-preview-banner"></div>
+    <div id="sections-transfer-row"></div>
+    <div class="chart-card" id="sections-chart-card">
+      <div class="chart-title">Progress per Section</div>
+      <div id="chart-bars"></div>
+    </div>
+    <div class="sections-grid" id="sections-grid"></div>
+  </div>
+
+  <!-- ITEMS -->
+  <div id="view-items" style="display:none">
+    <div class="view-title" id="items-title"></div>
+    <div class="prog-bar-wrap">
+      <div class="prog-bar"><div class="prog-bar-fill" id="items-bar" style="width:0%"></div></div>
+      <div class="prog-label" id="items-pct">0%</div>
+    </div>
+    <div id="section-banners"></div>
+    <div id="items-assign-row"></div>
+    <div class="linked-note">📋 Tasks in this section are independent — each section has its own separate task list.</div>
+    <div class="state-legend">
+      <span class="legend-item"><span class="legend-strip" style="border-left-color:rgba(17,17,17,.18);background:var(--faint)"></span>Unassigned</span>
+      <span class="legend-item"><span class="legend-strip" style="border-left-color:#f59e0b;background:#fffbeb"></span>Waiting</span>
+      <span class="legend-item"><span class="legend-strip" style="border-left-color:var(--blue);background:var(--blue-bg)"></span>In Progress</span>
+      <span class="legend-item"><span class="legend-strip" style="border-left-color:var(--red);background:var(--red-bg)"></span>Declined</span>
+      <span class="legend-item"><span class="legend-strip" style="border-left-color:var(--green);background:var(--green-bg)"></span>Done</span>
+    </div>
+    <button class="add-btn sm" id="add-task-btn" onclick="openModal()">+ Add Task</button>
+    <div class="items-list" id="items-list"></div>
+  </div>
+
+  <!-- MASTER OVERVIEW -->
+  <div id="view-master" style="display:none">
+    <div class="view-title">Overview</div>
+    <div class="view-sub" id="master-sub"></div>
+    <div class="master-tabs">
+      <button class="master-tab active" id="tab-person"  onclick="switchMasterTab('person')">By Person</button>
+      <button class="master-tab"        id="tab-project" onclick="switchMasterTab('project')">By Project</button>
+    </div>
+    <div id="master-content"></div>
+  </div>
+
+  <!-- TRASH -->
+  <div id="view-trash" style="display:none">
+    <div class="trash-header-row">
+      <div>
+        <div class="view-title" id="trash-title">Trash</div>
+        <div class="view-sub" id="trash-sub"></div>
+      </div>
+      <button class="trash-btn-sm" id="trash-clear-btn" onclick="clearAllTrash()" style="display:none">Clear all</button>
+    </div>
+    <div id="trash-list"></div>
+  </div>
+</main>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-title">Add Task</div>
+    <div class="modal-hint">Task will be added to the currently open section only.</div>
+    <input class="modal-input" id="modal-task" type="text" placeholder="Task name (e.g. Floor plan level 1)" maxlength="140"
+      onkeydown="if(event.key==='Enter')submitModal()">
+    <div style="font-size:.72rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Assign to</div>
+    <div class="worker-picker" id="worker-picker"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-save" onclick="submitModal()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- MEMBER MODAL -->
+<div class="modal-overlay" id="member-modal" onclick="if(event.target===this)closeMemberModal()">
+  <div class="modal">
+    <div class="modal-title">Add Team Member</div>
+    <div class="modal-hint">Initials are auto-generated from the name.</div>
+    <input class="modal-input" id="member-name" type="text" placeholder="Full name (e.g. Budi Santoso)" maxlength="60"
+      onkeydown="if(event.key==='Enter')submitMemberModal()">
+    <div style="font-size:.72rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Avatar Color</div>
+    <div class="color-picker" id="color-picker"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeMemberModal()">Cancel</button>
+      <button class="btn-save" onclick="submitMemberModal()">Add Member</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM REMOVE MODAL -->
+<div class="modal-overlay" id="remove-modal" onclick="if(event.target===this)closeRemoveModal()">
+  <div class="modal">
+    <div class="modal-title" id="remove-modal-title">Remove member?</div>
+    <div class="modal-hint" id="remove-modal-hint"></div>
+    <div id="remove-transfer-section" style="display:none">
+      <div style="font-size:.72rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Transfer their projects to:</div>
+      <div class="member-pick-grid" id="remove-transfer-options"></div>
+    </div>
+    <div class="modal-actions" style="margin-top:14px">
+      <button class="btn-cancel" onclick="closeRemoveModal()">Cancel</button>
+      <button class="btn-save" id="remove-confirm-btn" style="background:var(--red)" onclick="confirmRemoveMember()">Remove</button>
+    </div>
+  </div>
+</div>
+
+<!-- TRANSFER PROJECT MODAL -->
+<div class="modal-overlay" id="transfer-modal" onclick="if(event.target===this)closeTransferModal()">
+  <div class="modal">
+    <div class="modal-title">Transfer Project</div>
+    <div class="modal-hint" id="transfer-modal-hint"></div>
+    <div class="member-pick-grid" id="transfer-options"></div>
+    <div class="modal-actions" style="margin-top:14px">
+      <button class="btn-cancel" onclick="closeTransferModal()">Cancel</button>
+      <button class="btn-save" onclick="confirmTransfer()">Transfer</button>
+    </div>
+  </div>
+</div>
+
+<!-- NEW PROJECT MODAL -->
+<div class="modal-overlay" id="new-project-modal" onclick="if(event.target===this)closeNewProjectModal()">
+  <div class="modal">
+    <div class="modal-title">New Project</div>
+    <div class="modal-hint">The active person will be set as the project owner.</div>
+    <input class="modal-input" id="new-project-name" type="text" placeholder="Project name (e.g. Pondok Indah House)" maxlength="80"
+      onkeydown="if(event.key==='Enter')submitNewProject()">
+    <div style="font-size:.72rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;margin-top:4px">Start Date</div>
+    <input class="modal-input" id="new-project-date" type="date" style="margin-bottom:4px">
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeNewProjectModal()">Cancel</button>
+      <button class="btn-save" onclick="submitNewProject()">Create Project</button>
+    </div>
+  </div>
+</div>
+
+<!-- SECTION ACTION MODAL -->
+<div class="modal-overlay" id="section-action-modal" onclick="if(event.target===this)closeSectionActionModal()">
+  <div class="modal">
+    <div class="modal-title" id="sec-action-title"></div>
+    <div class="modal-hint"  id="sec-action-hint"></div>
+    <div class="member-pick-grid" id="sec-action-options"></div>
+    <div id="sec-action-clear" style="display:none;margin-bottom:10px">
+      <button style="width:100%;padding:10px;border:1.5px solid var(--red-br);border-radius:9px;background:none;color:var(--red);font-size:.82rem;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif" onclick="clearSectionAction()">Remove assignment</button>
+    </div>
+    <div class="modal-actions" style="margin-top:4px">
+      <button class="btn-cancel" onclick="closeSectionActionModal()">Cancel</button>
+      <button class="btn-save" id="btn-confirm-section-action" onclick="confirmSectionAction()">Assign</button>
+    </div>
+  </div>
+</div>
+
+<!-- TEAM UP MODAL -->
+<div class="modal-overlay" id="teamup-modal" onclick="if(event.target===this)closeTeamUpModal()">
+  <div class="modal">
+    <div class="modal-title">Add Collaborator</div>
+    <div class="modal-hint" id="teamup-modal-hint"></div>
+    <div class="member-pick-grid" id="teamup-options"></div>
+    <div class="modal-actions" style="margin-top:14px">
+      <button class="btn-cancel" onclick="closeTeamUpModal()">Cancel</button>
+      <button class="btn-save" onclick="confirmTeamUp()">Add</button>
+    </div>
+  </div>
+</div>
+
+<!-- PIN MODAL -->
+<div class="modal-overlay" id="pin-modal">
+  <div class="modal" style="padding-bottom:24px">
+    <div class="pin-avatar" id="pin-avatar"></div>
+    <div class="pin-person-name" id="pin-person-name"></div>
+    <div class="pin-mode-label" id="pin-mode-label">Enter your PIN</div>
+    <div class="pin-dots" id="pin-dots">
+      <div class="pin-dot"></div><div class="pin-dot"></div>
+      <div class="pin-dot"></div><div class="pin-dot"></div>
+    </div>
+    <div class="pin-error" id="pin-error"></div>
+    <div class="pin-numpad">
+      <button onclick="pinKey('1')">1</button>
+      <button onclick="pinKey('2')">2</button>
+      <button onclick="pinKey('3')">3</button>
+      <button onclick="pinKey('4')">4</button>
+      <button onclick="pinKey('5')">5</button>
+      <button onclick="pinKey('6')">6</button>
+      <button onclick="pinKey('7')">7</button>
+      <button onclick="pinKey('8')">8</button>
+      <button onclick="pinKey('9')">9</button>
+      <button class="pin-forgot-key" onclick="pinForgot()">Forgot?</button>
+      <button onclick="pinKey('0')">0</button>
+      <button class="pin-back-key" onclick="pinBackspace()">⌫</button>
+    </div>
+    <button class="btn-cancel" style="width:100%;margin-top:4px" onclick="closePinModal()">Cancel</button>
+  </div>
+</div>
+
+<!-- REQUEST TO JOIN MODAL -->
+<div class="modal-overlay" id="join-modal" onclick="if(event.target===this)closeJoinModal()">
+  <div class="modal">
+    <div class="modal-title">Request to Join</div>
+    <div class="modal-hint">Your request will be sent to the principal for approval.</div>
+    <input class="modal-input" id="join-name" type="text" placeholder="Your full name (e.g. Budi Santoso)" maxlength="60">
+    <input class="modal-input" id="join-email" type="email" placeholder="Your email address" maxlength="100">
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeJoinModal()">Cancel</button>
+      <button class="btn-save" onclick="submitJoinRequest()">Send Request</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- ═══ FIREBASE ═══ -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+<script>
+/* ════════════════════════════════════════════
+   DATA
+════════════════════════════════════════════ */
+const SECTIONS = [
+  { id: 'dd',        name: '01 — DD',         order: 0 },
+  { id: 'cd',        name: '02 — CD',         order: 1 },
+  { id: 'study3d',   name: '03 — 3D STUDY',   order: 2 },
+  { id: 'image',     name: '04 — IMAGE',      order: 3 },
+  { id: 'document',  name: '05 — DOCUMENT',   order: 4 },
+  { id: 'structure', name: '06 — STRUCTURE',  order: 5 },
+]
+
+let PEOPLE = [
+  { id: 'andreas', name: 'Andreas C.', initials: 'AC', color: '#1a56db', status: 'available', principal: true,  email: 'bangunasa@bangunasaecos.com' },
+  { id: 'elang',   name: 'Elang',      initials: 'EL', color: '#E02424', status: 'full',      principal: false, email: 'elang@bangunasaecos.com'      },
+]
+
+let SESSION            = { personId: null, isMaster: false }
+let PENDING_APPROVALS  = []
+
+const MEMBER_COLORS = [
+  '#1a56db', '#E02424', '#16a34a', '#ea580c',
+  '#7c3aed', '#0891b2', '#b45309', '#be185d',
+]
+
+let PROJECTS = []
+
+// TASKS[pid][sid] = array of tasks, each section has its own separate task list
+let TASKS = {}
+let DONE  = {}
+function initTaskData(pid) {
+  if (!TASKS[pid]) { TASKS[pid] = {}; DONE[pid] = {} }
+  SECTIONS.forEach(s => {
+    if (!TASKS[pid][s.id]) TASKS[pid][s.id] = []
+    if (!DONE[pid][s.id])  DONE[pid][s.id]  = {}
+  })
+}
+
+// SECTION_DATA for sections that have tasks
+let SECTION_DATA = {}
+
+/* ════════════════════════════════════════════
+   STATE
+════════════════════════════════════════════ */
+// Per-section assignee: SECTION_DATA[projectId][sectionId] = { assignee, assigneeStatus }
+function initSectionData(pid) {
+  if (!SECTION_DATA[pid]) {
+    SECTION_DATA[pid] = {}
+    SECTIONS.forEach(s => { SECTION_DATA[pid][s.id] = { assignee: null, assigneeStatus: null, collaborators: [], pendingTeamUps: [] } })
+  }
+}
+
+// TRASH[personName] = [{ trashId, type, data, deletedAt }]
+// type 'task': data = { task, pid, sid, projectName, sectionName }
+let TRASH = {}
+
+const TRASH_TTL_MS = 7 * 24 * 60 * 60 * 1000  // 1 week
+
+function addToTrash(personName, type, data) {
+  if (!TRASH[personName]) TRASH[personName] = []
+  TRASH[personName].push({ trashId: Date.now() + '_' + Math.random().toString(36).slice(2), type, data, deletedAt: Date.now() })
+}
+
+function getActiveTrash(personName) {
+  const now = Date.now()
+  return (TRASH[personName] || []).filter(item => (now - item.deletedAt) < TRASH_TTL_MS)
+}
+
+function trashExpiryLabel(deletedAt) {
+  const msLeft  = TRASH_TTL_MS - (Date.now() - deletedAt)
+  const daysLeft = Math.ceil(msLeft / (24 * 60 * 60 * 1000))
+  if (daysLeft <= 1)  return { label: 'Expires today', cls: 'expiry-soon' }
+  if (daysLeft <= 2)  return { label: `${daysLeft} days left`, cls: 'expiry-soon' }
+  return { label: `${daysLeft} days left`, cls: 'expiry-ok' }
+}
+
+let currentView        = 'people'
+let activePerson       = null
+let activeProject      = null
+let activeSection      = null
+let wasComplete        = false
+let removingPersonId   = null
+let selectedColor      = MEMBER_COLORS[0]
+let transferProjectId  = null
+let teamUpProjectId    = null
+let pickedMemberId     = null
+let removeTransferTo   = null
+let pickedWorker         = null
+let sectionActionSid     = null
+let sectionActionMode    = null  // 'transfer' | 'teamup'
+let pickedSectionMember  = null
+let pendingConfirmState  = null
+let expandedTaskAssign   = null   // taskId that has inline picker open
+let editingTaskId        = null   // taskId being renamed inline
+let masterTab            = 'person'
+
+/* ════════════════════════════════════════════
+   HELPERS
+════════════════════════════════════════════ */
+function getSectionProgress(pid, sid) {
+  const tasks = TASKS[pid]?.[sid] || []
+  const d     = DONE[pid]?.[sid] || {}
+  const done  = tasks.filter(t => d[t.id]?.done).length
+  return { total: tasks.length, done }
+}
+
+function getProjectProgress(pid) {
+  let total = 0, done = 0
+  SECTIONS.forEach(s => { const p = getSectionProgress(pid, s.id); total += p.total; done += p.done })
+  return { total, done }
+}
+
+// Returns PEOPLE objects of owner + accepted collaborators for a project
+function getProjectMembers(pid) {
+  const p = PROJECTS.find(q => q.id === pid)
+  if (!p) return []
+  return [p.owner, ...(p.collaborators || [])].map(name => PEOPLE.find(m => m.name === name)).filter(Boolean)
+}
+
+// Returns who can be assigned tasks in a specific section:
+// - Team Up mode → project owner + accepted section collaborators only (not pending)
+// - Transfer Full (accepted) → transfer recipient only
+// - Default → all project members
+function getSectionAssignableMembers(pid, sid) {
+  const sec = SECTION_DATA[pid]?.[sid] || {}
+  const hasTeamUp = (sec.collaborators||[]).length > 0 || (sec.pendingTeamUps||[]).length > 0
+  if (hasTeamUp) {
+    const p     = PROJECTS.find(q => q.id === pid)
+    const owner = p ? PEOPLE.find(m => m.name === p.owner) : null
+    const collabs = (sec.collaborators || []).map(name => PEOPLE.find(m => m.name === name)).filter(Boolean)
+    return [owner, ...collabs].filter(Boolean)
+  }
+  if (sec.assignee && sec.assigneeStatus === 'accepted') {
+    const recipient = PEOPLE.find(m => m.name === sec.assignee)
+    return recipient ? [recipient] : []
+  }
+  return getProjectMembers(pid)
+}
+
+// Cascade: when a person is removed from a project, clear their section/task assignments
+function cascadeRemovePerson(pid, personName) {
+  if (SECTION_DATA[pid]) {
+    Object.values(SECTION_DATA[pid]).forEach(sec => {
+      if (sec.assignee === personName) { sec.assignee = null; sec.assigneeStatus = null }
+      sec.collaborators   = (sec.collaborators   || []).filter(c => c !== personName)
+      sec.pendingTeamUps  = (sec.pendingTeamUps  || []).filter(r => r.name !== personName)
+    })
+  }
+  clearTasksForPerson(pid, personName)
+}
+
+/* ════════════════════════════════════════════
+   NAVIGATION
+════════════════════════════════════════════ */
+function goBack() {
+  if      (currentView === 'items')    { expandedTaskAssign = null; editingTaskId = null; pendingConfirmState = null; currentView = 'sections'; hide('view-items'); show('view-sections'); renderSectionsView() }
+  else if (currentView === 'sections') { pendingConfirmState = null; currentView = 'projects'; hide('view-sections'); show('view-projects'); renderProjects() }
+  else if (currentView === 'trash')    { currentView = 'projects'; hide('view-trash'); show('view-projects'); renderProjects() }
+  else if (currentView === 'master')   { navPeople() }
+  else if (currentView === 'projects') { navPeople() }
+}
+
+function navPeople() {
+  currentView = 'people'; activePerson = null; activeProject = null; activeSection = null
+  document.getElementById('back-btn').classList.remove('show')
+  show('view-people'); hide('view-projects'); hide('view-sections'); hide('view-items'); hide('view-trash'); hide('view-master')
+  if (window.showDogs) window.showDogs()
+  renderHeader()
+  renderPeople()
+}
+
+function navMaster() {
+  if (SESSION.isMaster) { _doNavMaster(); return }
+  openPinModal('master', { onSuccess: function() {
+    SESSION.isMaster = true; SESSION.personId = null; renderHeader(); _doNavMaster()
+  }})
+}
+function _doNavMaster() {
+  currentView = 'master'
+  document.getElementById('back-btn').classList.add('show')
+  if (window.hideDogs) window.hideDogs()
+  hide('view-people'); show('view-master')
+  renderMasterView()
+}
+
+function navTrash() {
+  currentView = 'trash'
+  document.getElementById('back-btn').classList.add('show')
+  hide('view-projects'); show('view-trash')
+  renderTrashView()
+}
+
+function navProjects(personId) {
+  if (SESSION.personId !== personId) {
+    openPinModal(personId)
+    return
+  }
+  _doNavProjects(personId)
+}
+function _doNavProjects(personId) {
+  activePerson  = PEOPLE.find(p => p.id === personId)
+  currentView   = 'projects'; activeProject = null; activeSection = null
+  document.getElementById('back-btn').classList.add('show')
+  document.getElementById('projects-title').textContent = activePerson.name
+  if (window.hideDogs) window.hideDogs()
+  hide('view-people'); show('view-projects'); hide('view-sections'); hide('view-items'); hide('view-trash'); hide('view-master')
+  renderAvailToggle()
+  renderPinChangeRow()
+  renderProjects()
+}
+function renderPinChangeRow() {
+  const el = document.getElementById('pin-change-row')
+  if (!el) return
+  el.style.display = SESSION.personId === activePerson?.id ? 'flex' : 'none'
+}
+
+function renderAvailToggle() {
+  const row = document.getElementById('avail-toggle-row')
+  const btn = document.getElementById('avail-toggle-btn')
+  if (!activePerson) { row.style.display = 'none'; return }
+  row.style.display = 'flex'
+  const isAvail = activePerson.status === 'available'
+  btn.className = `avail-toggle-btn ${activePerson.status}`
+  btn.textContent = isAvail ? 'Available ✓' : 'Full — not taking work'
+}
+
+function toggleAvailability() {
+  if (!activePerson) return
+  activePerson.status = activePerson.status === 'available' ? 'full' : 'available'
+  const person = PEOPLE.find(p => p.id === activePerson.id)
+  person.status = activePerson.status
+  saveState()
+  renderAvailToggle()
+  toast(activePerson.status === 'available' ? 'Status: Available ✓' : 'Status: Full')
+}
+
+function navSections(projectId) {
+  activeProject = PROJECTS.find(p => p.id === projectId)
+  currentView   = 'sections'; wasComplete = false
+  document.getElementById('sections-title').textContent = activeProject.name
+  hide('view-projects'); hide('view-trash'); show('view-sections')
+  renderSectionsView()
+}
+
+function navItems(sectionId) {
+  activeSection = SECTIONS.find(s => s.id === sectionId)
+  currentView   = 'items'
+  document.getElementById('items-title').textContent = activeSection.name
+  hide('view-sections'); show('view-items')
+  renderItemsView()
+}
+
+function show(id) { document.getElementById(id).style.display = 'block' }
+function hide(id) { document.getElementById(id).style.display = 'none' }
+
+/* ════════════════════════════════════════════
+   SESSION & HEADER
+════════════════════════════════════════════ */
+function renderHeader() {
+  const el = document.getElementById('header-right')
+  if (SESSION.isMaster) {
+    el.innerHTML = `
+      <div class="user-avatar" style="background:#111;font-size:.6rem;letter-spacing:.02em">MASTER</div>
+      <button class="btn-signout" onclick="signOut()">Sign Out</button>
+    `
+  } else if (SESSION.personId) {
+    const person = PEOPLE.find(p => p.id === SESSION.personId)
+    if (!person) { el.innerHTML = ''; return }
+    el.innerHTML = `
+      <div class="user-avatar" style="background:${person.color}">${person.initials}</div>
+      <button class="btn-signout" onclick="signOut()">Sign Out</button>
+    `
+  } else {
+    el.innerHTML = ''
+  }
+}
+
+function signOut() {
+  SESSION.personId = null
+  SESSION.isMaster = false
+  renderHeader()
+  navPeople()
+  toast('Signed out')
+  doSignOut()
+}
+
+/* ════════════════════════════════════════════
+   PIN SYSTEM
+════════════════════════════════════════════ */
+var pinState = { personId: null, mode: 'enter', digits: [], firstPin: null, onSuccess: null }
+
+function getPin(personId) {
+  try { return JSON.parse(localStorage.getItem('bae_pins') || '{}')[personId] || null } catch(e) { return null }
+}
+function savePin(personId, pin) {
+  try { var p = JSON.parse(localStorage.getItem('bae_pins') || '{}'); p[personId] = pin; localStorage.setItem('bae_pins', JSON.stringify(p)) } catch(e) {}
+}
+
+function openPinModal(personId, opts) {
+  opts = opts || {}
+  const isMasterLogin = (personId === 'master')
+  const person = isMasterLogin
+    ? { id: 'master', name: 'Master Account', initials: 'M', color: '#111111' }
+    : PEOPLE.find(p => p.id === personId)
+  if (!person) return
+  pinState.personId  = personId
+  pinState.digits    = []
+  pinState.firstPin  = null
+  pinState.onSuccess = opts.onSuccess || null
+  const hasPin = !!getPin(personId)
+  pinState.mode = hasPin ? 'enter' : 'create'
+  const av = document.getElementById('pin-avatar')
+  av.textContent       = isMasterLogin ? '🔑' : person.initials
+  av.style.background  = person.color
+  av.style.fontSize    = isMasterLogin ? '1.5rem' : ''
+  document.getElementById('pin-person-name').textContent = person.name
+  document.getElementById('pin-mode-label').textContent  = hasPin ? 'Enter your PIN' : (isMasterLogin ? 'Set up Master PIN' : 'Create your PIN')
+  document.getElementById('pin-error').textContent = ''
+  updatePinDots()
+  const forgotKey = document.querySelector('.pin-forgot-key')
+  if (forgotKey) forgotKey.style.visibility = hasPin ? 'visible' : 'hidden'
+  document.getElementById('pin-modal').classList.add('open')
+}
+
+function closePinModal() {
+  document.getElementById('pin-modal').classList.remove('open')
+  pinState.personId = null; pinState.digits = []; pinState.firstPin = null; pinState.onSuccess = null
+}
+
+function pinKey(digit) {
+  if (pinState.digits.length >= 4) return
+  pinState.digits.push(digit)
+  updatePinDots()
+  if (pinState.digits.length === 4) setTimeout(processPin, 120)
+}
+
+function pinBackspace() {
+  pinState.digits.pop()
+  updatePinDots()
+  document.getElementById('pin-error').textContent = ''
+}
+
+function updatePinDots() {
+  document.querySelectorAll('#pin-dots .pin-dot').forEach(function(d, i) {
+    d.classList.toggle('filled', i < pinState.digits.length)
+  })
+}
+
+function processPin() {
+  const entered = pinState.digits.join('')
+  const personId = pinState.personId
+  if (pinState.mode === 'enter') {
+    if (entered === getPin(personId)) {
+      const cb = pinState.onSuccess
+      closePinModal()
+      if (cb) { cb() }
+      else { SESSION.personId = personId; renderHeader(); _doNavProjects(personId) }
+    } else {
+      document.getElementById('pin-error').textContent = 'Incorrect PIN. Try again.'
+      pinState.digits = []; updatePinDots()
+    }
+  } else if (pinState.mode === 'create') {
+    pinState.firstPin = entered; pinState.mode = 'confirm'; pinState.digits = []
+    document.getElementById('pin-mode-label').textContent = 'Confirm your PIN'
+    updatePinDots()
+  } else if (pinState.mode === 'confirm') {
+    if (entered === pinState.firstPin) {
+      savePin(personId, entered)
+      const cb = pinState.onSuccess
+      closePinModal()
+      toast('PIN created ✓')
+      if (cb) { cb() }
+      else { SESSION.personId = personId; renderHeader(); _doNavProjects(personId) }
+    } else {
+      document.getElementById('pin-error').textContent = 'PINs do not match. Try again.'
+      pinState.mode = 'create'; pinState.firstPin = null; pinState.digits = []
+      document.getElementById('pin-mode-label').textContent = 'Create your PIN'
+      updatePinDots()
+    }
+  } else if (pinState.mode === 'change-new') {
+    pinState.firstPin = entered; pinState.mode = 'change-confirm'; pinState.digits = []
+    document.getElementById('pin-mode-label').textContent = 'Confirm new PIN'
+    updatePinDots()
+  } else if (pinState.mode === 'change-confirm') {
+    if (entered === pinState.firstPin) {
+      savePin(personId, entered)
+      const cb = pinState.onSuccess
+      closePinModal()
+      toast('PIN changed ✓')
+      if (cb) cb()
+    } else {
+      document.getElementById('pin-error').textContent = 'PINs do not match. Try again.'
+      pinState.mode = 'change-new'; pinState.firstPin = null; pinState.digits = []
+      document.getElementById('pin-mode-label').textContent = 'Enter new PIN'
+      updatePinDots()
+    }
+  }
+}
+
+function pinForgot() {
+  if (pinState.personId === 'master') {
+    toast('PIN reset link sent to bangunasa@bangunasaecos.com')
+    return
+  }
+  const person = PEOPLE.find(p => p.id === pinState.personId)
+  if (!person) return
+  const email = person.email || 'their registered email'
+  toast('PIN reset link sent to ' + email)
+}
+
+function openChangePinModal() {
+  if (!SESSION.personId) return
+  const person = PEOPLE.find(p => p.id === SESSION.personId)
+  if (!person) return
+  pinState.personId  = SESSION.personId
+  pinState.digits    = []
+  pinState.firstPin  = null
+  pinState.onSuccess = null
+  pinState.mode      = 'change-new'
+  document.getElementById('pin-avatar').textContent      = person.initials
+  document.getElementById('pin-avatar').style.background = person.color
+  document.getElementById('pin-person-name').textContent  = person.name
+  document.getElementById('pin-mode-label').textContent   = 'Enter new PIN'
+  document.getElementById('pin-error').textContent = ''
+  const forgotKey = document.querySelector('.pin-forgot-key')
+  if (forgotKey) forgotKey.style.visibility = 'hidden'
+  updatePinDots()
+  document.getElementById('pin-modal').classList.add('open')
+}
+
+/* ════════════════════════════════════════════
+   REQUEST TO JOIN / PENDING APPROVALS
+════════════════════════════════════════════ */
+function openJoinModal() {
+  document.getElementById('join-name').value  = ''
+  document.getElementById('join-email').value = ''
+  document.getElementById('join-modal').classList.add('open')
+}
+function closeJoinModal() {
+  document.getElementById('join-modal').classList.remove('open')
+}
+function submitJoinRequest() {
+  const name  = document.getElementById('join-name').value.trim()
+  const email = document.getElementById('join-email').value.trim()
+  if (!name)  { toast('Please enter your name'); return }
+  if (!email) { toast('Please enter your email'); return }
+  PENDING_APPROVALS.push({ id: 'pa_' + Date.now(), name, email, requestedAt: new Date().toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' }) })
+  saveState()
+  closeJoinModal()
+  toast('Request sent to bangunasa@bangunasaecos.com ✓')
+  renderPeople()
+}
+function approveMember(paId) {
+  const pa = PENDING_APPROVALS.find(p => p.id === paId)
+  if (!pa) return
+  const id = 'member_' + Date.now()
+  PEOPLE.push({ id, name: pa.name, initials: makeInitials(pa.name), color: MEMBER_COLORS[PEOPLE.length % MEMBER_COLORS.length], status: 'available', email: pa.email, principal: false })
+  ;[id].forEach(initTaskData)
+  PENDING_APPROVALS = PENDING_APPROVALS.filter(p => p.id !== paId)
+  saveState()
+  toast(pa.name + ' approved and added to team ✓')
+  renderPeople()
+}
+function rejectMember(paId) {
+  PENDING_APPROVALS = PENDING_APPROVALS.filter(p => p.id !== paId)
+  saveState()
+  toast('Request rejected.')
+  renderPeople()
+}
+
+function renderPendingApprovals() {
+  const el = document.getElementById('pending-approvals-section')
+  if (!el) return
+  if (!SESSION.isMaster || PENDING_APPROVALS.length === 0) { el.innerHTML = ''; return }
+  el.innerHTML = `
+    <div class="pending-section-label">⏳ Pending Approvals (${PENDING_APPROVALS.length})</div>
+    ${PENDING_APPROVALS.map(pa => `
+      <div class="pending-card">
+        <div class="pending-card-name">${pa.name}</div>
+        <div class="pending-card-email">${pa.email}</div>
+        <div class="pending-card-date">Requested: ${pa.requestedAt}</div>
+        <div class="pending-card-btns">
+          <button class="accept-btn" onclick="approveMember('${pa.id}')">Approve</button>
+          <button class="decline-btn" onclick="rejectMember('${pa.id}')">Reject</button>
+        </div>
+      </div>
+    `).join('')}
+  `
+}
+
+/* ════════════════════════════════════════════
+   RENDER: PEOPLE
+════════════════════════════════════════════ */
+function renderPeople() {
+  const projCount = name => PROJECTS.filter(p => p.owner === name || (p.collaborators||[]).includes(name)).length
+  const sorted = [...PEOPLE].sort((a, b) => projCount(b.name) - projCount(a.name))
+  const maxCount = sorted.length ? projCount(sorted[0].name) : 0
+
+  document.getElementById('people-grid').innerHTML = sorted.map((person, idx) => {
+    const projects  = PROJECTS.filter(p => p.owner === person.name || (p.collaborators || []).includes(person.name))
+    const active    = projects.filter(p => !p.released)
+    const delivered = projects.filter(p => p.released)
+    const inRevision= active.filter(p => p.revision > 0)
+    const complete  = active.filter(p => {
+      const { total, done } = getProjectProgress(p.id)
+      return total > 0 && done === total && !p.released
+    })
+
+    let totalTasks = 0, doneTasks = 0
+    projects.forEach(p => { const pg = getProjectProgress(p.id); totalTasks += pg.total; doneTasks += pg.done })
+    const pct = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0
+
+    const hasCrown    = maxCount > 0 && projCount(person.name) === maxCount
+    const hasEncourage = sorted.length > 1 && idx === sorted.length - 1 && !hasCrown
+    const chips = [
+      active.length    ? `<span class="person-chip active">${active.length} active</span>` : '',
+      complete.length  ? `<span class="person-chip complete">${complete.length} complete</span>` : '',
+      inRevision.length? `<span class="person-chip revision">${inRevision.length} revision</span>` : '',
+      delivered.length ? `<span class="person-chip delivered">${delivered.length} delivered</span>` : '',
+    ].filter(Boolean).join('')
+
+    const availChip = `<span class="avail-chip ${person.status}"><span class="avail-dot"></span>${person.status === 'available' ? 'Available' : 'Full'}</span>`
+
+    return `
+      <div class="person-card${hasCrown ? ' champ' : hasEncourage ? ' encourage' : ''}" onclick="navProjects('${person.id}')" style="position:relative">
+        ${hasCrown    ? `<div class="champ-ribbon">🏆 #1 RANKED</div>` : ''}
+        ${hasEncourage? `<div class="encourage-ribbon">⚡ KEEP GOING!</div>` : ''}
+        <div style="position:relative;flex-shrink:0;overflow:visible">
+          ${hasCrown    ? `<div class="champ-avatar-ring"></div>` : ''}
+          <div class="person-avatar" style="background:${person.color};position:relative;z-index:2">${person.initials}</div>
+          ${hasCrown    ? `<div class="crown-anim">👑</div>` : ''}
+          ${hasEncourage? `<div class="encourage-fist">💪</div>` : ''}
+        </div>
+        <div class="person-info">
+          <div class="person-name">${person.name} <span style="font-size:.72rem;font-weight:400;color:var(--muted)">${pct}% overall</span></div>
+          <div class="person-meta" style="gap:5px">
+            ${availChip}
+            ${chips || '<span class="person-chip">No projects</span>'}
+          </div>
+        </div>
+        <button class="person-remove" title="Remove member"
+          onclick="event.stopPropagation();openRemoveModal('${person.id}')">✕</button>
+        <span class="chevron">›</span>
+      </div>`
+  }).join('')
+  const ob = document.getElementById('overview-btn')
+  if (ob) ob.textContent = SESSION.isMaster ? '📊 Overview' : '🔒 Overview'
+  renderPendingApprovals()
+}
+
+/* ════════════════════════════════════════════
+   RENDER: PROJECTS
+════════════════════════════════════════════ */
+function buildCard(p, R, C, isDelivered) {
+  const { total, done } = getProjectProgress(p.id)
+  const pct      = total > 0 ? Math.round((done / total) * 100) : 0
+  const dash     = C - (C * pct / 100)
+  const complete = pct === 100 && total > 0
+  const collabs  = p.collaborators || []
+  const isOwner  = p.owner === activePerson?.name
+  const isPendingTransferPreview = !isOwner && p.pendingTransfer?.to === activePerson?.name
+
+  let releaseRow = ''
+  if (complete && !isDelivered && isOwner) {
+    releaseRow = `
+      <div class="release-row" onclick="event.stopPropagation()">
+        <span class="release-label">Delivery status</span>
+        <button class="release-toggle ${p.released ? 'approved' : ''}" onclick="toggleRelease(${p.id})">
+          <span class="release-dot"></span>${p.released ? 'Approved ✓' : 'Pending Approval'}
+        </button>
+      </div>`
+  } else if (complete && !isDelivered && !isOwner) {
+    releaseRow = `
+      <div class="release-row" onclick="event.stopPropagation()">
+        <span class="release-label">Delivery status</span>
+        <span style="font-size:.72rem;color:var(--muted)">Awaiting owner approval</span>
+      </div>`
+  } else if (isDelivered && isOwner) {
+    releaseRow = `
+      <div class="release-row" onclick="event.stopPropagation()">
+        <span class="release-label">Delivery status</span>
+        <div style="display:flex;gap:8px">
+          <button class="release-toggle approved" onclick="toggleRelease(${p.id})">
+            <span class="release-dot"></span>Approved ✓
+          </button>
+          <button class="revision-btn" onclick="requestRevision(${p.id})">↩ Request Revision</button>
+        </div>
+      </div>`
+  } else if (isDelivered) {
+    releaseRow = `
+      <div class="release-row" onclick="event.stopPropagation()">
+        <span class="release-label">Delivery status</span>
+        <span class="release-toggle approved" style="cursor:default">
+          <span class="release-dot"></span>Approved ✓
+        </span>
+      </div>`
+  }
+
+  const badges = isDelivered
+    ? `<span class="badge badge-released">Delivered ✓</span>`
+    : [
+        isPendingTransferPreview ? `<span class="badge" style="background:#fff7ed;color:var(--orange);border:1px solid rgba(234,88,12,.25)">👁 Preview</span>` : '',
+        complete       ? `<span class="badge badge-done">Complete</span>`                    : '',
+        p.revision > 0 ? `<span class="badge badge-revision">Revision R${p.revision}</span>` : '',
+      ].join('')
+
+  // Accepted collaborator avatars
+  const collabAvatars = collabs.map(name => {
+    const person = PEOPLE.find(q => q.name === name)
+    const ini    = person ? person.initials : name.slice(0,2).toUpperCase()
+    const col    = person ? person.color    : '#888'
+    return `<div class="collab-avatar" style="background:${col}" title="${name} (accepted)">
+      ${ini}
+      ${isOwner ? `<div class="collab-remove" onclick="event.stopPropagation();removeCollab(${p.id},'${name}')">✕</div>` : ''}
+    </div>`
+  }).join('')
+
+  // Pending team-up avatars (semi-transparent, with cancel — only owner can cancel)
+  const pendingTeamUps = p.pendingTeamUps || []
+  const pendingAvatars = pendingTeamUps.map(({ name }) => {
+    const person = PEOPLE.find(q => q.name === name)
+    const ini    = person ? person.initials : name.slice(0,2).toUpperCase()
+    const col    = person ? person.color    : '#888'
+    return `<div style="position:relative;display:inline-flex;align-items:center;gap:3px;">
+      <div class="collab-avatar" style="background:${col};opacity:.45" title="${name} (pending)">⏳</div>
+      <span style="font-size:.58rem;color:var(--orange)">${name.split(' ')[0]}</span>
+      ${isOwner ? `<button onclick="event.stopPropagation();cancelTeamUp(${p.id},'${name}')" style="background:none;border:none;font-size:.6rem;color:var(--muted);cursor:pointer;padding:0 2px">✕</button>` : ''}
+    </div>`
+  }).join('')
+
+  const ownerPerson = PEOPLE.find(q => q.name === p.owner)
+  const collabRow = `
+    <div class="collab-row" onclick="event.stopPropagation()">
+      <span class="collab-label">Team:</span>
+      <div class="collab-avatar" style="background:${ownerPerson?.color || '#888'}" title="${p.owner} (owner)">
+        ${ownerPerson?.initials || p.owner.slice(0,2).toUpperCase()}
+      </div>
+      ${collabAvatars}
+      ${pendingAvatars}
+      ${isOwner && !isDelivered ? `<button class="proj-act-btn" onclick="event.stopPropagation();openTeamUpModal(${p.id})" style="padding:2px 9px;font-size:.64rem">＋ Team Up</button>` : ''}
+    </div>`
+
+  // Pending transfer status row — only owner can initiate or cancel transfer
+  // Transfer and Team Up are mutually exclusive: if project has collaborators, no transfer option
+  const pendingTransfer    = p.pendingTransfer
+  const hasProjectTeamUp   = collabs.length > 0 || pendingTeamUps.length > 0
+  const isConfirmingLeave  = pendingConfirmState?.type === 'leaveProject' && pendingConfirmState?.id === p.id
+  const transferRow = !isDelivered && isOwner ? (
+    pendingTransfer ? `
+    <div class="proj-action-row" onclick="event.stopPropagation()">
+      <span style="font-size:.68rem;color:var(--orange);flex:1">⏳ Transfer pending ${pendingTransfer.to}'s acceptance</span>
+      <button class="proj-act-btn" onclick="event.stopPropagation();cancelTransfer(${p.id})">✕ Cancel</button>
+    </div>` : !hasProjectTeamUp ? `
+    <div class="proj-action-row" onclick="event.stopPropagation()">
+      <button class="proj-act-btn" onclick="event.stopPropagation();openTransferModal(${p.id})">→ Transfer Full</button>
+    </div>` : ''
+  ) : !isDelivered && !isOwner && !isPendingTransferPreview ? `
+    <div class="proj-action-row" onclick="event.stopPropagation()">
+      ${isConfirmingLeave ? `
+        <span style="font-size:.68rem;color:var(--muted);flex:1">Leave this project?</span>
+        <button class="proj-act-btn" style="color:var(--red);border-color:var(--red-br)" onclick="event.stopPropagation();confirmPendingAction()">Yes, leave</button>
+        <button class="proj-act-btn" onclick="event.stopPropagation();cancelPendingConfirm()">Cancel</button>
+      ` : `
+        <button class="proj-act-btn" onclick="event.stopPropagation();initConfirm('leaveProject',${p.id},'leave')">← Leave project</button>
+      `}
+    </div>` : ''
+
+  return `
+    <div class="project-card ${isDelivered ? 'delivered' : complete ? 'complete' : ''}"
+      onclick="navSections(${p.id})">
+      <div class="project-card-main">
+        <div class="ring-wrap">
+          <svg width="52" height="52" viewBox="0 0 52 52">
+            <circle class="ring-bg" cx="26" cy="26" r="${R}"/>
+            <circle class="ring-fill" cx="26" cy="26" r="${R}"
+              stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${dash.toFixed(1)}"/>
+          </svg>
+          <div class="ring-pct">${pct}%</div>
+        </div>
+        <div class="project-info">
+          <div class="project-name">${p.name} ${badges}</div>
+          <div class="project-detail">${done} of ${total} tasks done</div>
+          <div class="project-meta-row">
+            <span class="project-owner-chip" style="background:${PEOPLE.find(q=>q.name===p.owner)?.color||'#888'}20;color:${PEOPLE.find(q=>q.name===p.owner)?.color||'#888'}">
+              <span class="project-owner-dot" style="background:${PEOPLE.find(q=>q.name===p.owner)?.color||'#888'}"></span>
+              ${p.owner === activePerson?.name ? 'You' : p.owner}
+            </span>
+            <span class="project-date-chip">📅 ${formatProjectDate(p.startDate)}</span>
+            <span class="project-date-chip">${getProjectDuration(p.startDate)}</span>
+          </div>
+        </div>
+        <div class="project-card-actions">
+          ${isOwner ? `<button class="icon-btn" onclick="event.stopPropagation();deleteProject(${p.id})" title="Move to Trash">🗑</button>` : ''}
+          <span class="chevron">›</span>
+        </div>
+      </div>
+      ${collabRow}
+      ${transferRow}
+      ${releaseRow}
+    </div>`
+}
+
+function updateTrashBadge() {
+  const badge = document.getElementById('trash-badge')
+  if (!badge) return
+  const count = activePerson ? getActiveTrash(activePerson.name).length : 0
+  if (count > 0) { badge.style.display = ''; badge.textContent = count }
+  else             badge.style.display = 'none'
+}
+
+function renderProjects() {
+  updateTrashBadge()
+  const R = 22, C = 2 * Math.PI * R
+  const me = activePerson?.name
+
+  const myProjects = activePerson
+    ? PROJECTS.filter(p =>
+        p.owner === me ||
+        (p.collaborators||[]).includes(me) ||
+        p.pendingTransfer?.to === me   // can preview project before accepting transfer
+      )
+    : PROJECTS
+
+  const byDate    = (a, b) => new Date(b.startDate) - new Date(a.startDate)
+  const active    = myProjects.filter(p => !p.released).sort(byDate)
+  const delivered = myProjects.filter(p => p.released).sort(byDate)
+
+  document.getElementById('projects-sub').textContent =
+    `${active.length} active project${active.length !== 1 ? 's' : ''}`
+
+  document.getElementById('projects-grid').innerHTML = active.length
+    ? active.map(p => buildCard(p, R, C, false)).join('')
+    : `<div style="text-align:center;padding:32px 20px;color:var(--muted);font-size:.82rem">No active projects yet.</div>`
+
+  const deliveredSection = document.getElementById('delivered-section')
+  if (delivered.length) {
+    deliveredSection.style.display = 'block'
+    document.getElementById('delivered-count').textContent = delivered.length
+    document.getElementById('delivered-grid').innerHTML = delivered.map(p => buildCard(p, R, C, true)).join('')
+  } else {
+    deliveredSection.style.display = 'none'
+  }
+
+  // Incoming requests for this person
+  const incomingEl = document.getElementById('incoming-section')
+  if (!incomingEl || !activePerson) { if (incomingEl) incomingEl.innerHTML = ''; return }
+
+  const incomingTransfers = PROJECTS.filter(p => p.pendingTransfer?.to === me)
+  const incomingTeamUps   = PROJECTS.filter(p => (p.pendingTeamUps||[]).some(r => r.name === me))
+
+  if (!incomingTransfers.length && !incomingTeamUps.length) { incomingEl.innerHTML = ''; return }
+
+  const isConfirming = (type, pid, pname) =>
+    pendingConfirmState?.type === type && pendingConfirmState?.id === pid &&
+    (!pname || pendingConfirmState?.personName === pname)
+
+  let html = `<div class="incoming-section-label">Incoming Requests</div>`
+
+  incomingTransfers.forEach(p => {
+    const confirming = isConfirming('projectTransfer', p.id, null)
+    html += `<div class="incoming-card">
+      <div class="incoming-card-title">Full project transfer from ${p.owner}</div>
+      <div class="incoming-card-name">${p.name}</div>
+      ${confirming ? `
+        <div class="incoming-confirm-row">
+          <span class="incoming-confirm-label">Confirm: ${pendingConfirmState.action === 'accept' ? 'Accept transfer?' : 'Decline transfer?'}</span>
+          <button class="accept-btn" onclick="confirmPendingAction()">Yes</button>
+          <button class="decline-btn" onclick="cancelPendingConfirm()">Cancel</button>
+        </div>` : `
+        <div class="incoming-card-btns">
+          <button class="accept-btn" onclick="initConfirm('projectTransfer',${p.id},'accept')">Accept Transfer</button>
+          <button class="decline-btn" onclick="initConfirm('projectTransfer',${p.id},'decline')">Decline</button>
+        </div>`}
+    </div>`
+  })
+
+  incomingTeamUps.forEach(p => {
+    const req = (p.pendingTeamUps||[]).find(r => r.name === me)
+    if (!req) return
+    const confirming = isConfirming('projectTeamUp', p.id, me)
+    html += `<div class="incoming-card">
+      <div class="incoming-card-title">Team-up invitation from ${p.owner}</div>
+      <div class="incoming-card-name">${p.name}</div>
+      ${confirming ? `
+        <div class="incoming-confirm-row">
+          <span class="incoming-confirm-label">Confirm: ${pendingConfirmState.action === 'accept' ? 'Join team?' : 'Decline invitation?'}</span>
+          <button class="accept-btn" onclick="confirmPendingAction()">Yes</button>
+          <button class="decline-btn" onclick="cancelPendingConfirm()">Cancel</button>
+        </div>` : `
+        <div class="incoming-card-btns">
+          <button class="accept-btn" onclick="initConfirm('projectTeamUp',${p.id},'accept','${me}')">Accept Team Up</button>
+          <button class="decline-btn" onclick="initConfirm('projectTeamUp',${p.id},'decline','${me}')">Decline</button>
+        </div>`}
+    </div>`
+  })
+
+  incomingEl.innerHTML = html
+}
+
+function toggleRelease(id) {
+  const p = PROJECTS.find(p => p.id === id)
+  p.released = !p.released
+  saveState()
+  toast(p.released ? 'Approved ✓' : 'Moved back to Pending Approval')
+  renderProjects()
+}
+
+function requestRevision(id) {
+  const p = PROJECTS.find(p => p.id === id)
+  p.released = false
+  p.revision += 1
+  saveState()
+  toast(`Revision R${p.revision} requested — uncheck tasks that need rework`)
+  renderProjects()
+}
+
+/* ════════════════════════════════════════════
+   RENDER: SECTIONS
+════════════════════════════════════════════ */
+function renderSectionsView() {
+  const isOwner = activeProject?.owner === activePerson?.name
+  const isPendingTransferPreview = !isOwner && activeProject?.pendingTransfer?.to === activePerson?.name
+
+  const { total, done } = getProjectProgress(activeProject.id)
+  const pct      = total > 0 ? Math.round((done / total) * 100) : 0
+  const complete = pct === 100 && total > 0
+
+  document.getElementById('sections-bar').style.width = pct + '%'
+  document.getElementById('sections-pct').textContent = `${done}/${total} · ${pct}%`
+  document.getElementById('complete-banner').style.display = complete ? 'flex' : 'none'
+  if (complete && !wasComplete) { toast('🎉 Project 100% complete!'); wasComplete = true }
+
+  const previewBanner = document.getElementById('sections-preview-banner')
+  if (previewBanner) {
+    previewBanner.innerHTML = isPendingTransferPreview
+      ? `<div class="preview-banner">👁 You're previewing this project — accept the transfer to take ownership and edit</div>`
+      : ''
+  }
+
+  const transferRow = document.getElementById('sections-transfer-row')
+  if (transferRow) {
+    const pt = activeProject.pendingTransfer
+    const projCollabs      = activeProject.collaborators   || []
+    const projPendingTeams = activeProject.pendingTeamUps  || []
+    const hasProjectTeamUp = projCollabs.length > 0 || projPendingTeams.length > 0
+    if (isOwner) {
+      if (pt) {
+        transferRow.innerHTML = `
+          <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:#fff7ed;border:1px solid rgba(234,88,12,.2);border-radius:12px;margin-bottom:12px;font-size:.78rem">
+            <span style="color:var(--orange);flex:1">⏳ Transfer to <strong>${pt.to}</strong> — waiting for acceptance</span>
+            <button class="sec-act-btn" onclick="cancelTransfer(${activeProject.id});renderSectionsView()">✕ Cancel</button>
+          </div>`
+      } else if (!hasProjectTeamUp) {
+        transferRow.innerHTML = `
+          <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
+            <button class="sec-act-btn" style="font-size:.72rem" onclick="openTransferModal(${activeProject.id})">→ Transfer Full Project</button>
+          </div>`
+      } else {
+        transferRow.innerHTML = ''
+      }
+    } else {
+      transferRow.innerHTML = ''
+    }
+  }
+
+  document.getElementById('chart-bars').innerHTML = SECTIONS.map(s => {
+    const { total: st, done: sd } = getSectionProgress(activeProject.id, s.id)
+    const sp  = st > 0 ? Math.round((sd / st) * 100) : 0
+    const fin = sp === 100 && st > 0
+    return `
+      <div class="chart-row">
+        <div class="chart-label">${s.name}</div>
+        <div class="chart-bar-wrap"><div class="chart-bar-fill" style="width:${sp}%"></div></div>
+        <div class="chart-pct ${fin ? 'done' : sp === 0 ? 'zero' : ''}">${sp}%${fin ? ' ✓' : ''}</div>
+      </div>`
+  }).join('')
+
+  document.getElementById('sections-grid').innerHTML = SECTIONS.map(s => {
+    const { total: st, done: sd } = getSectionProgress(activeProject.id, s.id)
+    const sp  = st > 0 ? Math.round((sd / st) * 100) : 0
+    const fin = sp === 100 && st > 0
+    const secData        = SECTION_DATA[activeProject.id]?.[s.id] || {}
+    const assigneePerson = secData.assignee ? PEOPLE.find(p => p.name === secData.assignee) : null
+    const assigneeStatus = secData.assigneeStatus
+    const iAmAssignee    = activePerson && secData.assignee === activePerson.name
+    const isConfirming   = pendingConfirmState?.type === 'section' && pendingConfirmState?.id === s.id
+
+    const secCollabs      = secData.collaborators  || []
+    const secPendingTeams = secData.pendingTeamUps || []
+    const hasTransfer     = !!assigneePerson
+    const hasTeamUp       = secCollabs.length > 0 || secPendingTeams.length > 0
+    const iAmCollabHere   = activePerson && secCollabs.includes(activePerson.name)
+    const iAmPendingTeamUpHere = activePerson && secPendingTeams.some(r => r.name === activePerson.name)
+
+    let teamRowContent = ''
+
+    if (isPendingTransferPreview) {
+      // Project-level transfer preview — read-only
+      if (assigneePerson) {
+        const lbl = assigneeStatus === 'pending' ? '⏳ Pending transfer' : '✓ Transferred'
+        teamRowContent = `<div class="sec-team-avatar" style="background:${assigneePerson.color};${assigneeStatus==='pending'?'opacity:.5':''}">${assigneePerson.initials}</div><span class="sec-team-label">${assigneePerson.name} — ${lbl}</span>`
+      }
+    } else if (!hasTransfer && !hasTeamUp) {
+      // Nothing set yet
+      teamRowContent = isOwner
+        ? `<button class="sec-act-btn" onclick="openSectionTransfer('${s.id}')">→ Transfer</button>
+           <button class="sec-act-btn" onclick="openSectionTeamUp('${s.id}')">+ Team Up</button>`
+        : ''
+
+    } else if (hasTransfer) {
+      // ── Transfer Full mode ──
+      if (assigneeStatus === 'pending') {
+        if (iAmAssignee) {
+          if (isConfirming) {
+            const lbl = pendingConfirmState.action === 'accept' ? 'Accept transfer' : 'Decline transfer'
+            teamRowContent = `<div class="sec-confirm-row"><span class="sec-pending-label">Confirm: ${lbl}?</span>
+              <button class="sec-act-btn" style="color:var(--green);border-color:rgba(22,163,74,.3)" onclick="confirmPendingAction()">Yes</button>
+              <button class="sec-act-btn" onclick="cancelPendingConfirm()">No</button></div>`
+          } else {
+            teamRowContent = `<span class="sec-pending-label">⏳ Transfer offer — preview inside first</span>
+              <button class="sec-act-btn" style="color:var(--green);border-color:rgba(22,163,74,.3)" onclick="initConfirm('section','${s.id}','accept')">Accept</button>
+              <button class="sec-act-btn" style="color:var(--red);border-color:rgba(224,36,36,.25)" onclick="initConfirm('section','${s.id}','decline')">Decline</button>`
+          }
+        } else if (isOwner) {
+          teamRowContent = `<div class="sec-team-avatar" style="background:${assigneePerson.color};opacity:.5">${assigneePerson.initials}</div>
+            <span class="sec-pending-label" style="color:var(--orange)">⏳ Transfer pending ${assigneePerson.name}...</span>
+            <button class="sec-act-btn" onclick="cancelSectionTransfer('${s.id}')">✕ Cancel</button>`
+        } else {
+          teamRowContent = `<div class="sec-team-avatar" style="background:${assigneePerson.color};opacity:.5">${assigneePerson.initials}</div>
+            <span class="sec-pending-label" style="color:var(--orange)">⏳ Transfer pending ${assigneePerson.name}...</span>`
+        }
+      } else if (assigneeStatus === 'accepted') {
+        const isConfirmingWithdraw = pendingConfirmState?.type === 'withdrawSection' && pendingConfirmState?.id === s.id
+        if (isOwner) {
+          teamRowContent = `<div class="sec-team-avatar" style="background:${assigneePerson.color}">${assigneePerson.initials}</div>
+            <span class="sec-team-label">Transferred to ${assigneePerson.name}</span>
+            <button class="sec-act-btn" onclick="cancelSectionTransfer('${s.id}')">Revoke</button>`
+        } else if (iAmAssignee) {
+          if (isConfirmingWithdraw) {
+            teamRowContent = `<div class="sec-confirm-row"><span class="sec-pending-label">Leave this section?</span>
+              <button class="sec-act-btn" style="color:var(--red);border-color:rgba(224,36,36,.25)" onclick="confirmPendingAction()">Yes, leave</button>
+              <button class="sec-act-btn" onclick="cancelPendingConfirm()">Cancel</button></div>`
+          } else {
+            teamRowContent = `<div class="sec-team-avatar" style="background:${assigneePerson.color}">${assigneePerson.initials}</div>
+              <span class="sec-team-label">Transferred to you</span>
+              <button class="sec-act-btn" style="color:var(--muted)" onclick="initConfirm('withdrawSection','${s.id}','withdraw')">← Leave</button>`
+          }
+        } else {
+          teamRowContent = `<div class="sec-team-avatar" style="background:${assigneePerson.color}">${assigneePerson.initials}</div>
+            <span class="sec-team-label">Transferred to ${assigneePerson.name}</span>`
+        }
+      }
+
+    } else if (hasTeamUp) {
+      // ── Team Up mode ──
+      let inner = ''
+
+      secCollabs.forEach(name => {
+        const mp = PEOPLE.find(q => q.name === name)
+        if (!mp) return
+        const isMe = activePerson && name === activePerson.name
+        const isConfirmingLeave   = pendingConfirmState?.type === 'leaveSection' && pendingConfirmState?.id === s.id && pendingConfirmState?.personName === name
+        const isConfirmingRemove  = pendingConfirmState?.type === 'removeSectionCollab' && pendingConfirmState?.id === s.id && pendingConfirmState?.personName === name
+        if (isOwner) {
+          if (isConfirmingRemove) {
+            inner += `<span class="sec-pending-label">Remove ${name}?</span>
+              <button class="sec-act-btn" style="color:var(--red)" onclick="confirmPendingAction()">Yes</button>
+              <button class="sec-act-btn" onclick="cancelPendingConfirm()">No</button>`
+          } else {
+            inner += `<div style="position:relative;display:inline-flex">
+              <div class="sec-team-avatar" style="background:${mp.color}" title="${name}">${mp.initials}</div>
+              <button onclick="initConfirm('removeSectionCollab','${s.id}','remove','${name}')" style="position:absolute;top:-4px;right:-4px;width:14px;height:14px;border-radius:50%;background:var(--red);border:none;color:#fff;font-size:.55rem;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1">✕</button>
+            </div>`
+          }
+        } else if (isMe) {
+          if (isConfirmingLeave) {
+            inner += `<span class="sec-pending-label">Leave this section?</span>
+              <button class="sec-act-btn" style="color:var(--red)" onclick="confirmPendingAction()">Yes, leave</button>
+              <button class="sec-act-btn" onclick="cancelPendingConfirm()">Cancel</button>`
+          } else {
+            inner += `<div class="sec-team-avatar" style="background:${mp.color}">${mp.initials}</div>
+              <span class="sec-team-label">You're in</span>
+              <button class="sec-act-btn" style="color:var(--muted)" onclick="initConfirm('leaveSection','${s.id}','leave','${name}')">← Leave</button>`
+          }
+        } else {
+          inner += `<div class="sec-team-avatar" style="background:${mp.color}" title="${name}">${mp.initials}</div>`
+        }
+      })
+
+      secPendingTeams.forEach(({ name }) => {
+        const mp = PEOPLE.find(q => q.name === name)
+        if (!mp) return
+        const isMe = activePerson && name === activePerson.name
+        const isConfirmingTeamUp = pendingConfirmState?.type === 'sectionTeamUp' && pendingConfirmState?.id === s.id && pendingConfirmState?.personName === name
+        if (isMe) {
+          if (isConfirmingTeamUp) {
+            const lbl = pendingConfirmState.action === 'accept' ? 'Accept' : 'Decline'
+            inner += `<span class="sec-pending-label">Confirm: ${lbl} section invite?</span>
+              <button class="sec-act-btn" style="color:var(--green);border-color:rgba(22,163,74,.3)" onclick="confirmPendingAction()">Yes</button>
+              <button class="sec-act-btn" onclick="cancelPendingConfirm()">No</button>`
+          } else {
+            inner += `<span class="sec-pending-label">⏳ Team-up invite</span>
+              <button class="sec-act-btn" style="color:var(--green);border-color:rgba(22,163,74,.3)" onclick="initConfirm('sectionTeamUp','${s.id}','accept','${name}')">Accept</button>
+              <button class="sec-act-btn" style="color:var(--red);border-color:rgba(224,36,36,.25)" onclick="initConfirm('sectionTeamUp','${s.id}','decline','${name}')">Decline</button>`
+          }
+        } else if (isOwner) {
+          inner += `<div style="position:relative;display:inline-flex">
+            <div class="sec-team-avatar" style="background:${mp.color};opacity:.5" title="⏳ ${name}">${mp.initials}</div>
+            <button onclick="cancelSectionTeamUpInvite('${s.id}','${name}')" style="position:absolute;top:-4px;right:-4px;width:14px;height:14px;border-radius:50%;background:var(--muted);border:none;color:#fff;font-size:.55rem;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1">✕</button>
+          </div>`
+        }
+      })
+
+      if (isOwner) {
+        inner += `<button class="sec-act-btn" onclick="openSectionTeamUp('${s.id}')">+ Add</button>`
+      }
+      teamRowContent = inner
+    }
+
+    return `
+      <div class="section-card ${fin ? 'done' : sp === 0 ? 'zero' : ''}" onclick="navItems('${s.id}')">
+        <div class="section-card-top">
+          <div class="section-card-left">
+            <div class="section-card-name">${s.name}${fin ? '<span class="section-check"> ✓</span>' : ''}</div>
+            <div class="section-card-detail">${sd}/${st} tasks done</div>
+          </div>
+          <div class="section-card-right">
+            <div class="section-mini-bar"><div class="section-mini-fill" style="width:${sp}%"></div></div>
+            <span class="chevron">›</span>
+          </div>
+        </div>
+        <div class="section-team-row" onclick="event.stopPropagation()">${teamRowContent}</div>
+      </div>`
+  }).join('')
+}
+
+/* ════════════════════════════════════════════
+   RENDER: ITEMS
+════════════════════════════════════════════ */
+function renderItemsView() {
+  const isOwner = activeProject?.owner === activePerson?.name
+  const isPendingTransferPreview = !isOwner && activeProject?.pendingTransfer?.to === activePerson?.name
+  const isCollaborator = !isOwner && !isPendingTransferPreview
+
+  // Section data needed before item filtering
+  const secData             = SECTION_DATA[activeProject.id]?.[activeSection.id] || {}
+  const assigneePerson      = secData.assignee ? PEOPLE.find(p => p.name === secData.assignee) : null
+  const assigneeStatus      = secData.assigneeStatus
+  const iAmAssignee         = activePerson && secData.assignee === activePerson.name
+  const isConfirmingSec     = pendingConfirmState?.type === 'section' && pendingConfirmState?.id === activeSection.id
+  const iAmSectionCollab    = activePerson && (secData.collaborators||[]).includes(activePerson.name)
+  const iAmPendingTeamUp    = activePerson && (secData.pendingTeamUps||[]).some(r => r.name === activePerson.name)
+  // Transfer Full accepted recipient sees all tasks (like extended owner)
+  const isSectionTransferOwner = iAmAssignee && assigneeStatus === 'accepted'
+  // Preview mode: pending transfer recipient OR pending team-up member
+  const isPendingSectionPreview = (iAmAssignee && assigneeStatus === 'pending') || iAmPendingTeamUp
+
+  const tasks   = TASKS[activeProject.id]?.[activeSection.id] || []
+  const doneSec = DONE[activeProject.id]?.[activeSection.id] || {}
+  const allItems = tasks.map(t => ({ ...t, ...(doneSec[t.id] || { done: false }) }))
+  // Collaborators (team-up accepted) see only their tasks; all others (owner, transfer owner, preview) see all
+  const items = (isCollaborator && !isPendingSectionPreview && !isSectionTransferOwner)
+    ? allItems.filter(i => i.worker === activePerson?.name)
+    : allItems
+  const total   = items.length
+  const done    = items.filter(i => i.done).length
+  const pct     = total > 0 ? Math.round((done / total) * 100) : 0
+
+  document.getElementById('items-bar').style.width = pct + '%'
+  document.getElementById('items-pct').textContent = `${done}/${total} · ${pct}%`
+
+  const secCollabsItems   = secData.collaborators  || []
+  const secPendingTeams   = secData.pendingTeamUps || []
+  const hasTransferItems  = !!assigneePerson
+  const hasTeamUpItems    = secCollabsItems.length > 0 || secPendingTeams.length > 0
+
+  let banners = isPendingTransferPreview
+    ? `<div class="preview-banner">👁 You're previewing this project — accept the transfer to take ownership and edit</div>`
+    : ''
+
+  if (!isPendingTransferPreview) {
+    if (hasTransferItems) {
+      // Transfer Full section banner
+      if (assigneeStatus === 'pending' && iAmAssignee) {
+        const previewLine = `<div class="preview-banner" style="margin-bottom:8px">👁 Preview — review section contents before accepting</div>`
+        if (isConfirmingSec) {
+          const label = pendingConfirmState.action === 'accept' ? 'Accept' : 'Decline'
+          banners = previewLine + `<div class="section-owner-banner pending">
+            <span>Confirm: ${label} section transfer?</span>
+            <div style="display:flex;gap:6px"><button class="accept-btn" onclick="confirmPendingAction()">Yes, ${label}</button><button class="decline-btn" onclick="cancelPendingConfirm()">Cancel</button></div></div>`
+        } else {
+          banners = previewLine + `<div class="section-owner-banner pending">
+            <span>⏳ Transfer offer for this section</span>
+            <div style="display:flex;gap:6px">
+              <button class="accept-btn" onclick="initConfirm('section','${activeSection.id}','accept')">Accept</button>
+              <button class="decline-btn" onclick="initConfirm('section','${activeSection.id}','decline')">Decline</button>
+            </div></div>`
+        }
+      } else if (assigneeStatus === 'pending' && isOwner) {
+        banners = `<div class="section-owner-banner waiting">⏳ Waiting for ${assigneePerson.name} to accept the transfer...</div>`
+      } else if (assigneeStatus === 'accepted') {
+        const isConfirmingWithdrawBanner = pendingConfirmState?.type === 'withdrawSection' && pendingConfirmState?.id === activeSection.id
+        if (iAmAssignee) {
+          if (isConfirmingWithdrawBanner) {
+            banners = `<div class="section-owner-banner pending"><span>Leave this section? Your task assignments will be cleared.</span>
+              <div style="display:flex;gap:6px"><button class="decline-btn" onclick="confirmPendingAction()">Yes, leave</button><button class="accept-btn" onclick="cancelPendingConfirm()">Cancel</button></div></div>`
+          } else {
+            banners = `<div class="section-owner-banner accepted" style="justify-content:space-between">
+              <span>✓ Section transferred to you</span>
+              <button class="sec-act-btn" style="font-size:.65rem" onclick="initConfirm('withdrawSection','${activeSection.id}','withdraw')">← Leave</button></div>`
+          }
+        } else if (isOwner) {
+          banners = `<div class="section-owner-banner accepted">✓ Section transferred to ${assigneePerson.name}</div>`
+        }
+      }
+    } else if (hasTeamUpItems) {
+      // Team Up section banner
+      if (iAmPendingTeamUp) {
+        const sid = activeSection.id
+        const me  = activePerson?.name
+        const isConfirmingTeamUpBanner = pendingConfirmState?.type === 'sectionTeamUp' && pendingConfirmState?.id === sid && pendingConfirmState?.personName === me
+        const previewLine = `<div class="preview-banner" style="margin-bottom:8px">👁 Preview — review section contents before accepting</div>`
+        if (isConfirmingTeamUpBanner) {
+          const lbl = pendingConfirmState.action === 'accept' ? 'Accept' : 'Decline'
+          banners = previewLine + `<div class="section-owner-banner pending"><span>Confirm: ${lbl} team-up invite?</span>
+            <div style="display:flex;gap:6px"><button class="accept-btn" onclick="confirmPendingAction()">Yes, ${lbl}</button><button class="decline-btn" onclick="cancelPendingConfirm()">Cancel</button></div></div>`
+        } else {
+          banners = previewLine + `<div class="section-owner-banner pending"><span>⏳ Team-up invite for this section</span>
+            <div style="display:flex;gap:6px">
+              <button class="accept-btn" onclick="initConfirm('sectionTeamUp','${activeSection.id}','accept','${me}')">Accept</button>
+              <button class="decline-btn" onclick="initConfirm('sectionTeamUp','${activeSection.id}','decline','${me}')">Decline</button>
+            </div></div>`
+        }
+      } else if (iAmSectionCollab) {
+        const isConfirmingLeave = pendingConfirmState?.type === 'leaveSection' && pendingConfirmState?.id === activeSection.id && pendingConfirmState?.personName === activePerson?.name
+        if (isConfirmingLeave) {
+          banners = `<div class="section-owner-banner pending"><span>Leave this section? Your task assignments will be cleared.</span>
+            <div style="display:flex;gap:6px"><button class="decline-btn" onclick="confirmPendingAction()">Yes, leave</button><button class="accept-btn" onclick="cancelPendingConfirm()">Cancel</button></div></div>`
+        } else {
+          banners = `<div class="section-owner-banner accepted" style="justify-content:space-between">
+            <span>✓ You're collaborating on this section</span>
+            <button class="sec-act-btn" style="font-size:.65rem" onclick="initConfirm('leaveSection','${activeSection.id}','leave','${activePerson?.name}')">← Leave</button></div>`
+        }
+      } else if (isOwner) {
+        const names = secCollabsItems.join(', ') || 'pending...'
+        banners = `<div class="section-owner-banner accepted">Team Up: ${names}</div>`
+      }
+    }
+  }
+  document.getElementById('section-banners').innerHTML = banners
+
+  // Add Task button — owner only
+  const addTaskBtn = document.getElementById('add-task-btn')
+  if (addTaskBtn) addTaskBtn.style.display = isOwner ? '' : 'none'
+
+  // Section collaboration row in items view — only for project owner, only if no collaboration yet
+  const assignRow = document.getElementById('items-assign-row')
+  if (assignRow) {
+    if (isOwner && !hasTransferItems && !hasTeamUpItems) {
+      assignRow.innerHTML = `
+        <div style="display:flex;gap:8px;margin-bottom:10px">
+          <button class="sec-act-btn" onclick="openSectionTransfer('${activeSection.id}')">→ Transfer Section</button>
+          <button class="sec-act-btn" onclick="openSectionTeamUp('${activeSection.id}')">+ Team Up</button>
+        </div>`
+    } else {
+      assignRow.innerHTML = ''
+    }
+  }
+
+  if (!items.length) {
+    const msg = isCollaborator
+      ? 'No tasks assigned to you in this section.'
+      : 'No tasks yet.<br>Add tasks specific to this section.'
+    document.getElementById('items-list').innerHTML = `
+      <div style="text-align:center;padding:40px 20px;color:var(--muted)">
+        <div style="font-size:2.4rem;margin-bottom:10px">📝</div>
+        <p style="font-size:.82rem">${msg}</p>
+      </div>`
+    return
+  }
+
+  document.getElementById('items-list').innerHTML = items.map(item => {
+    const meta = item.done && item.doneBy
+      ? `Completed by <span class="by">${item.doneBy}</span>${item.doneAt ? ' · ' + item.doneAt : ''}`
+      : ''
+
+    const rowState = item.done ? 'done'
+      : item.workerStatus === 'accepted' ? 'state-accepted'
+      : item.workerStatus === 'pending'  ? 'state-pending'
+      : ''
+
+    // Preview mode (transfer preview OR pending section assignee): show tasks read-only
+    if (isPendingTransferPreview || isPendingSectionPreview) {
+      let workerChip = ''
+      if (item.worker) {
+        const wPerson = PEOPLE.find(p => p.name === item.worker)
+        const wColor  = wPerson ? wPerson.color : '#888'
+        const statusLabel = { accepted: 'Accepted ✓', pending: 'Pending...' }[item.workerStatus] || ''
+        workerChip = `<div style="margin-top:5px;display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+          <div class="worker-badge"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${wColor};margin-right:2px"></span>${item.worker}</div>
+          ${statusLabel ? `<span class="task-status ${item.workerStatus}">${statusLabel}</span>` : ''}
+        </div>`
+      }
+      return `
+        <div class="item-row ${rowState}" style="opacity:.85">
+          <div class="checkbox ${item.done ? 'checked' : ''}" style="pointer-events:none">
+            <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+              <path d="M1.5 5.5l3 3 5-5" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div class="item-body">
+            <div class="item-text">${item.text}</div>
+            ${workerChip}
+            ${meta ? `<div class="item-meta">${meta}</div>` : ''}
+          </div>
+        </div>`
+    }
+
+    // Worker status badge + remove button
+    const isConfirmingRemove = pendingConfirmState?.type === 'removeTaskWorker' && pendingConfirmState?.id === item.id
+    let workerInfo = ''
+    if (item.worker) {
+      const wPerson = PEOPLE.find(p => p.name === item.worker)
+      const wColor  = wPerson ? wPerson.color : '#888'
+      const statusLabel = { accepted: 'Accepted ✓', declined: 'Declined ✗', pending: 'Pending...' }[item.workerStatus] || ''
+      const statusClass  = item.workerStatus || ''
+      const removeConfirmRow = isConfirmingRemove
+        ? `<div class="task-resp-btns inline-confirm" style="margin-top:6px">
+            <span class="confirm-label">Remove assignment?</span>
+            <button class="accept-btn" style="background:var(--red)" onclick="confirmPendingAction()">Yes, remove</button>
+            <button class="decline-btn" onclick="cancelPendingConfirm()">Cancel</button>
+          </div>` : ''
+      workerInfo = `<div style="margin-top:5px">
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+          <div class="worker-badge"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${wColor};margin-right:2px"></span>${item.worker}</div>
+          ${statusLabel ? `<span class="task-status ${statusClass}">${statusLabel}</span>` : ''}
+          ${isOwner && !isConfirmingRemove ? `<button onclick="initConfirm('removeTaskWorker',${item.id},'remove')" style="background:none;border:none;font-size:.65rem;color:rgba(17,17,17,.25);cursor:pointer;padding:0 3px;line-height:1" title="Remove assignment">✕</button>` : ''}
+        </div>
+        ${removeConfirmRow}
+      </div>`
+    }
+
+    // Inline assign picker: when section has accepted Team Up members OR an accepted transfer
+    const sectionMembers = getSectionAssignableMembers(activeProject.id, activeSection.id)
+    const isTransferAccepted = hasTransferItems && assigneeStatus === 'accepted'
+    const canAssignInSection = (hasTeamUpItems && secCollabsItems.length > 0) || isTransferAccepted
+    const isExpanded = expandedTaskAssign === item.id
+    let assignBtn = ''
+    if (!item.worker && !isConfirmingRemove && isOwner && canAssignInSection) {
+      if (isExpanded) {
+        const pills = sectionMembers.length
+          ? sectionMembers.map(m => {
+              const isSelf = activePerson && m.name === activePerson.name
+              const isFull = m.status === 'full' && !isSelf
+              if (isFull) {
+                return `<button class="worker-pill disabled-pill" disabled style="color:var(--red);border-color:rgba(224,36,36,.3)">
+                  <span class="worker-pill-dot" style="background:${m.color}"></span>${m.name} <span style="font-size:.58rem">— Full</span>
+                </button>`
+              }
+              const selfTag = isSelf ? ' <span style="font-size:.58rem;opacity:.55">(You)</span>' : ''
+              return `<button class="worker-pill" onclick="pickAndAssignTask(${item.id},'${m.id}')">
+                <span class="worker-pill-dot" style="background:${m.color}"></span>${m.name}${selfTag}
+              </button>`
+            }).join('')
+          : `<span style="font-size:.72rem;color:var(--muted)">No accepted members for this section yet.</span>`
+        assignBtn = `<div style="margin-top:8px">
+          <div class="worker-picker" style="margin-bottom:6px">${pills}</div>
+          <button class="sec-act-btn" onclick="expandedTaskAssign=null;renderItemsView()">Cancel</button>
+        </div>`
+      } else {
+        assignBtn = `<button class="sec-act-btn" style="margin-top:6px" onclick="expandedTaskAssign=${item.id};renderItemsView()">+ Assign to</button>`
+      }
+    }
+
+    // Accept/decline for tasks assigned to the active person
+    const isMyTask = activePerson && item.worker === activePerson.name && item.workerStatus !== null
+    const isConfirmingThis = pendingConfirmState?.type === 'task' && pendingConfirmState?.id === item.id
+    const isConfirmingDelete = pendingConfirmState?.type === 'deleteTask' && pendingConfirmState?.id === item.id
+    let respBtns = ''
+    if (isMyTask && !isConfirmingRemove && !isConfirmingDelete) {
+      if (isConfirmingThis) {
+        const labels = { accept:'Accept task', decline:'Decline task — will be removed', resign:'Resign from task' }
+        respBtns = `<div class="task-resp-btns inline-confirm">
+          <span class="confirm-label">Confirm: ${labels[pendingConfirmState.action]}?</span>
+          <button class="accept-btn" onclick="confirmPendingAction()">Yes</button>
+          <button class="decline-btn" onclick="cancelPendingConfirm()">Cancel</button>
+        </div>`
+      } else if (item.workerStatus === 'pending') {
+        respBtns = `<div class="task-resp-btns">
+          <button class="accept-btn" onclick="initConfirm('task',${item.id},'accept')">Accept</button>
+          <button class="decline-btn" onclick="initConfirm('task',${item.id},'decline')">Decline</button>
+        </div>`
+      } else if (item.workerStatus === 'accepted') {
+        respBtns = `<div class="task-resp-btns">
+          <button class="decline-btn" onclick="initConfirm('task',${item.id},'resign')">Resign from task</button>
+        </div>`
+      }
+    }
+
+    // Delete confirm row
+    const deleteConfirmRow = isConfirmingDelete ? `
+      <div class="task-resp-btns inline-confirm" style="margin-top:6px">
+        <span class="confirm-label">Delete this task?</span>
+        <button class="accept-btn" style="background:var(--red)" onclick="confirmPendingAction()">Yes, delete</button>
+        <button class="decline-btn" onclick="cancelPendingConfirm()">Cancel</button>
+      </div>` : ''
+
+    // Inline edit mode
+    const isEditing = editingTaskId === item.id
+    const canManageTask = isOwner || (activePerson && item.worker === activePerson.name)
+
+    return `
+      <div class="item-row ${rowState}">
+        <div class="checkbox ${item.done ? 'checked' : ''}" onclick="toggleItem(${item.id})">
+          <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+            <path d="M1.5 5.5l3 3 5-5" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div class="item-body">
+          ${isEditing ? `
+            <input type="text" id="edit_task_${item.id}" value="${item.text.replace(/"/g,'&quot;')}"
+              class="modal-input" style="margin-bottom:6px;padding:7px 10px;font-size:.85rem"
+              maxlength="140" onkeydown="if(event.key==='Enter')saveTaskEdit(${item.id})">
+            <div style="display:flex;gap:6px">
+              <button class="accept-btn" onclick="saveTaskEdit(${item.id})">Save</button>
+              <button class="decline-btn" onclick="editingTaskId=null;renderItemsView()">Cancel</button>
+            </div>
+          ` : `
+            <div class="item-text">${item.text}</div>
+            ${workerInfo}
+            ${assignBtn}
+            ${deleteConfirmRow}
+            ${meta ? `<div class="item-meta">${meta}</div>` : ''}
+            ${respBtns}
+          `}
+        </div>
+        ${canManageTask && !isEditing ? `
+        <div class="item-actions">
+          <button class="item-icon-btn" onclick="startEditTask(${item.id})" title="Rename task">✏️</button>
+          <button class="item-icon-btn del" onclick="initConfirm('deleteTask',${item.id},'delete')" title="Delete task">✕</button>
+        </div>` : ''}
+      </div>`
+  }).join('')
+}
+
+function pickAndAssignTask(taskId, memberId) {
+  const task   = (TASKS[activeProject.id]?.[activeSection.id] || []).find(t => t.id === taskId)
+  const member = PEOPLE.find(p => p.id === memberId)
+  if (!task || !member) return
+  const isSelf      = activePerson && member.name === activePerson.name
+  task.worker       = member.name
+  task.workerStatus = isSelf ? 'accepted' : 'pending'
+  expandedTaskAssign = null
+  saveState()
+  toast(isSelf ? `Task assigned to you ✓` : `Assignment request sent to ${member.name} — waiting for acceptance`)
+  renderItemsView()
+}
+
+function startEditTask(taskId) {
+  editingTaskId     = taskId
+  expandedTaskAssign = null
+  pendingConfirmState = null
+  renderItemsView()
+  setTimeout(() => document.getElementById('edit_task_' + taskId)?.focus(), 50)
+}
+
+function saveTaskEdit(taskId) {
+  const input = document.getElementById('edit_task_' + taskId)
+  const text  = input?.value.trim()
+  if (!text) return
+  const task = (TASKS[activeProject.id]?.[activeSection.id] || []).find(t => t.id === taskId)
+  if (task) task.text = text
+  editingTaskId = null
+  saveState()
+  toast('Task renamed ✓')
+  renderItemsView()
+}
+
+function toggleItem(taskId) {
+  const d = DONE[activeProject.id][activeSection.id]
+  if (!d[taskId]) d[taskId] = { done: false }
+  d[taskId].done = !d[taskId].done
+  if (d[taskId].done) {
+    const task = (TASKS[activeProject.id]?.[activeSection.id] || []).find(t => t.id === taskId)
+    d[taskId].doneBy = task?.worker || activePerson?.name || 'Unknown'
+    d[taskId].doneAt = new Date().toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' })
+  } else { d[taskId].doneBy = null; d[taskId].doneAt = null }
+  saveState()
+  renderItemsView()
+  const tasks = TASKS[activeProject.id]?.[activeSection.id] || []
+  if (tasks.length > 0 && tasks.every(t => d[t.id]?.done)) toast('Section complete! 🎉')
+}
+
+/* ════════════════════════════════════════════
+   MODAL
+════════════════════════════════════════════ */
+function openModal() {
+  pickedWorker = null
+  document.getElementById('modal-task').value = ''
+  const isOwner = activeProject?.owner === activePerson?.name
+  if (isOwner) {
+    const pid = activeProject?.id || 0
+    const sid = activeSection?.id
+    const sec = SECTION_DATA[pid]?.[sid] || {}
+    const secCollabs = sec.collaborators || []
+    const hasAcceptedTeamUp = secCollabs.length > 0
+
+    if (hasAcceptedTeamUp) {
+      // Only show accepted section collaborators in picker
+      const eligibleMembers = getSectionAssignableMembers(pid, sid)
+      const allMembers = eligibleMembers.map(m => {
+        const isSelf = activePerson && m.name === activePerson.name
+        const isFull = m.status === 'full' && !isSelf
+        if (isFull) {
+          return `<button class="worker-pill disabled-pill" disabled style="color:var(--red);border-color:rgba(224,36,36,.3)">
+            <span class="worker-pill-dot" style="background:${m.color}"></span>${m.name} <span style="font-size:.6rem">— Full</span>
+          </button>`
+        }
+        const selfTag = isSelf ? ' <span style="font-size:.6rem;opacity:.55">(You)</span>' : ''
+        return `<button class="worker-pill" id="wpill_${m.id}" onclick="pickWorker('${m.id}')">
+          <span class="worker-pill-dot" style="background:${m.color}"></span>${m.name}${selfTag}
+        </button>`
+      })
+      document.getElementById('worker-picker').innerHTML =
+        `<button class="worker-pill selected" id="wpill_none" onclick="pickWorker(null)">Unassigned</button>` +
+        allMembers.join('')
+    } else {
+      // No section collaboration — task added as unassigned, no picker
+      document.getElementById('worker-picker').innerHTML =
+        `<span style="font-size:.72rem;color:var(--muted)">Set up section Team Up first to assign tasks.</span>`
+    }
+  } else {
+    // Collaborator: no assignment picker, task is added unassigned
+    document.getElementById('worker-picker').innerHTML =
+      `<span style="font-size:.72rem;color:var(--muted)">Only the project owner can assign tasks to others.</span>`
+  }
+  document.getElementById('modal').classList.add('open')
+  setTimeout(() => document.getElementById('modal-task').focus(), 80)
+}
+
+function pickWorker(memberId) {
+  pickedWorker = memberId
+  document.querySelectorAll('.worker-pill').forEach(el => el.classList.remove('selected'))
+  const target = memberId ? `wpill_${memberId}` : 'wpill_none'
+  document.getElementById(target)?.classList.add('selected')
+}
+
+function closeModal() { document.getElementById('modal').classList.remove('open') }
+
+function submitModal() {
+  const text = document.getElementById('modal-task').value.trim()
+  if (!text) return
+  closeModal()
+  const workerPerson = pickedWorker ? PEOPLE.find(p => p.id === pickedWorker) : null
+  const isSelfAssign = workerPerson && activePerson && workerPerson.name === activePerson.name
+  const pid  = activeProject.id
+  const sid  = activeSection.id
+  const tasks = TASKS[pid][sid]
+  const newId = tasks.length > 0 ? Math.max(...tasks.map(t => t.id)) + 1 : 1
+  tasks.push({
+    id: newId, text,
+    worker: workerPerson?.name || null,
+    workerStatus: workerPerson ? (isSelfAssign ? 'accepted' : 'pending') : null,
+  })
+  if (!DONE[pid][sid]) DONE[pid][sid] = {}
+  DONE[pid][sid][newId] = { done: false }
+  saveState()
+  toast('Task added ✓')
+  renderItemsView()
+}
+
+/* ════════════════════════════════════════════
+   MEMBER MANAGEMENT
+════════════════════════════════════════════ */
+function makeInitials(name) {
+  const parts = name.trim().split(/\s+/)
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+}
+
+function openMemberModal() {
+  selectedColor = MEMBER_COLORS[0]
+  document.getElementById('member-name').value = ''
+  document.getElementById('color-picker').innerHTML = MEMBER_COLORS.map((c, i) =>
+    `<div class="color-swatch ${i === 0 ? 'selected' : ''}" style="background:${c}"
+      onclick="selectColor('${c}',this)"></div>`
+  ).join('')
+  document.getElementById('member-modal').classList.add('open')
+  setTimeout(() => document.getElementById('member-name').focus(), 80)
+}
+
+function selectColor(color, el) {
+  selectedColor = color
+  document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('selected'))
+  el.classList.add('selected')
+}
+
+function closeMemberModal() {
+  document.getElementById('member-modal').classList.remove('open')
+}
+
+function submitMemberModal() {
+  const name = document.getElementById('member-name').value.trim()
+  if (!name) return
+  const id = 'member_' + Date.now()
+  PEOPLE.push({ id, name, initials: makeInitials(name), color: selectedColor })
+  closeMemberModal()
+  toast(`${name} added to team ✓`)
+  renderPeople()
+}
+
+function openRemoveModal(personId) {
+  const person      = PEOPLE.find(p => p.id === personId)
+  removingPersonId  = personId
+  removeTransferTo  = null
+  const ownedProj   = PROJECTS.filter(p => p.owner === person.name)
+  const others      = PEOPLE.filter(p => p.id !== personId)
+
+  document.getElementById('remove-modal-title').textContent = `Remove ${person.name}?`
+
+  const transferSection = document.getElementById('remove-transfer-section')
+  if (ownedProj.length > 0 && others.length > 0) {
+    document.getElementById('remove-modal-hint').textContent =
+      `${person.name} owns ${ownedProj.length} project${ownedProj.length > 1 ? 's' : ''}. Transfer them to another team member before removing.`
+    document.getElementById('remove-transfer-options').innerHTML = others.map(m =>
+      `<button class="member-pick-btn" id="rtransfer_${m.id}" onclick="pickRemoveTransfer('${m.id}')">
+        <div class="member-pick-avatar" style="background:${m.color}">${m.initials}</div>
+        <div class="member-pick-name">${m.name}</div>
+      </button>`
+    ).join('')
+    transferSection.style.display = 'block'
+    document.getElementById('remove-confirm-btn').disabled = true
+    document.getElementById('remove-confirm-btn').style.opacity = '.45'
+  } else {
+    document.getElementById('remove-modal-hint').textContent = ownedProj.length === 0
+      ? 'This member has no owned projects. They will be removed from the team.'
+      : 'No other team members to transfer to. Add another member first.'
+    transferSection.style.display = 'none'
+    document.getElementById('remove-confirm-btn').disabled = false
+    document.getElementById('remove-confirm-btn').style.opacity = '1'
+  }
+  document.getElementById('remove-modal').classList.add('open')
+}
+
+function pickRemoveTransfer(memberId) {
+  removeTransferTo = memberId
+  document.querySelectorAll('[id^="rtransfer_"]').forEach(el => el.classList.remove('selected'))
+  document.getElementById('rtransfer_' + memberId).classList.add('selected')
+  document.getElementById('remove-confirm-btn').disabled = false
+  document.getElementById('remove-confirm-btn').style.opacity = '1'
+}
+
+function closeRemoveModal() {
+  document.getElementById('remove-modal').classList.remove('open')
+  removingPersonId = null; removeTransferTo = null
+}
+
+function confirmRemoveMember() {
+  const person    = PEOPLE.find(p => p.id === removingPersonId)
+  const ownedProj = PROJECTS.filter(p => p.owner === person.name)
+  if (ownedProj.length > 0 && removeTransferTo) {
+    const target = PEOPLE.find(p => p.id === removeTransferTo)
+    ownedProj.forEach(p => { p.owner = target.name })
+    toast(`${ownedProj.length} project${ownedProj.length > 1 ? 's' : ''} transferred to ${target.name}`)
+  }
+  // remove from collaborators on any project
+  PROJECTS.forEach(p => { p.collaborators = (p.collaborators || []).filter(c => c !== person.name) })
+  PEOPLE = PEOPLE.filter(p => p.id !== removingPersonId)
+  saveState()
+  closeRemoveModal()
+  renderPeople()
+}
+
+/* ════════════════════════════════════════════
+   TRANSFER PROJECT
+════════════════════════════════════════════ */
+function openTransferModal(projectId) {
+  const p = PROJECTS.find(q => q.id === projectId)
+  transferProjectId = projectId; pickedMemberId = null
+  const options = PEOPLE.filter(m => m.name !== p.owner)
+  document.getElementById('transfer-modal-hint').textContent = `Transfer "${p.name}" to another team member. The current owner (${p.owner}) will be replaced.`
+  document.getElementById('transfer-options').innerHTML = options.length
+    ? options.map(m => {
+        const isFull = m.status === 'full'
+        return isFull
+          ? `<button class="member-pick-btn" disabled style="opacity:.45;cursor:not-allowed">
+              <div class="member-pick-avatar" style="background:${m.color}">${m.initials}</div>
+              <div class="member-pick-name" style="color:var(--red)">${m.name} <span style="font-size:.65rem;font-weight:500">— Full</span></div>
+            </button>`
+          : `<button class="member-pick-btn" id="tpick_${m.id}" onclick="pickMember('tpick','${m.id}')">
+              <div class="member-pick-avatar" style="background:${m.color}">${m.initials}</div>
+              <div class="member-pick-name">${m.name}</div>
+            </button>`
+      }).join('')
+    : `<p style="font-size:.82rem;color:var(--muted);padding:8px 0">No other team members. Add a member first.</p>`
+  document.getElementById('transfer-modal').classList.add('open')
+}
+function closeTransferModal() {
+  document.getElementById('transfer-modal').classList.remove('open')
+  transferProjectId = null; pickedMemberId = null
+}
+function confirmTransfer() {
+  if (!pickedMemberId || !transferProjectId) return
+  const p      = PROJECTS.find(q => q.id === transferProjectId)
+  const target = PEOPLE.find(m => m.id === pickedMemberId)
+  p.pendingTransfer = { to: target.name, from: p.owner, sentDate: new Date().toISOString().slice(0,10) }
+  saveState()
+  closeTransferModal()
+  toast(`Transfer request sent to ${target.name} — waiting for acceptance`)
+  if (currentView === 'sections') renderSectionsView()
+  else renderProjects()
+}
+
+/* ════════════════════════════════════════════
+   NEW PROJECT
+════════════════════════════════════════════ */
+function openNewProjectModal() {
+  if (!activePerson) { toast('Select a person first before adding a project'); return }
+  document.getElementById('new-project-name').value = ''
+  document.getElementById('new-project-date').value = new Date().toISOString().slice(0, 10)
+  document.getElementById('new-project-modal').classList.add('open')
+  setTimeout(() => document.getElementById('new-project-name').focus(), 80)
+}
+function closeNewProjectModal() {
+  document.getElementById('new-project-modal').classList.remove('open')
+}
+function submitNewProject() {
+  const name = document.getElementById('new-project-name').value.trim()
+  if (!name) { toast('Project name cannot be empty'); return }
+  const dateVal = document.getElementById('new-project-date').value
+  const newId   = PROJECTS.length > 0 ? Math.max(...PROJECTS.map(p => p.id)) + 1 : 1
+  const newProj = {
+    id: newId, name,
+    owner: activePerson.name,
+    collaborators: [], pendingTransfer: null, pendingTeamUps: [],
+    released: false, revision: 0,
+    startDate: dateVal || new Date().toISOString().slice(0, 10)
+  }
+  PROJECTS.push(newProj)
+  initTaskData(newId)
+  initSectionData(newId)
+  saveState()
+  closeNewProjectModal()
+  toast(`Project "${name}" created ✓`)
+  renderProjects()
+}
+
+/* ════════════════════════════════════════════
+   MASTER OVERVIEW
+════════════════════════════════════════════ */
+function switchMasterTab(tab) {
+  masterTab = tab
+  document.getElementById('tab-person').classList.toggle('active',  tab === 'person')
+  document.getElementById('tab-project').classList.toggle('active', tab === 'project')
+  renderMasterView()
+}
+
+function daysSince(dateStr) {
+  if (!dateStr) return null
+  const diff = Math.floor((Date.now() - new Date(dateStr)) / 86400000)
+  return diff < 0 ? 0 : diff
+}
+
+function fmtDate(dateStr) {
+  if (!dateStr) return '—'
+  const d = new Date(dateStr)
+  return d.toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' })
+}
+
+function getWorkerSummary(pid) {
+  const result = {}
+  SECTIONS.forEach(s => {
+    const tasks = TASKS[pid]?.[s.id] || []
+    const done  = DONE[pid]?.[s.id]  || {}
+    tasks.forEach(t => {
+      if (!t.worker) return
+      if (!result[t.worker]) result[t.worker] = { sections: {}, total: 0, done: 0 }
+      if (!result[t.worker].sections[s.name]) result[t.worker].sections[s.name] = []
+      const isDone = !!(done[t.id]?.done)
+      result[t.worker].sections[s.name].push({ text: t.text, done: isDone })
+      result[t.worker].total++
+      if (isDone) result[t.worker].done++
+    })
+  })
+  return result
+}
+
+function buildAssignmentHtml(pid) {
+  const summary = getWorkerSummary(pid)
+  const entries = Object.entries(summary)
+  if (!entries.length) return ''
+  const totalTasks = entries.reduce((s, [, v]) => s + v.total, 0)
+  return `<div class="ma-block">
+    <div class="ma-hd">
+      <span class="ma-title">👥 Task Assignments</span>
+      <span class="ma-total">${totalTasks} task${totalTasks !== 1 ? 's' : ''}</span>
+    </div>
+    <div class="ma-scroll">
+      ${entries.map(([name, data]) => {
+        const person = PEOPLE.find(p => p.name === name)
+        const color  = person?.color || '#999'
+        const secHtml = Object.entries(data.sections).map(([secName, tasks]) => {
+          const shortSec = secName.replace(/^\d+\s*—\s*/, '')
+          const taskHtml = tasks.map(t =>
+            `<div class="ma-task${t.done ? ' done' : ''}"><span class="ma-task-dot"></span>${t.text}</div>`
+          ).join('')
+          return `<div class="ma-sec"><span class="ma-sec-lbl">${shortSec}</span><div class="ma-task-list">${taskHtml}</div></div>`
+        }).join('')
+        return `<div class="ma-person">
+          <div class="ma-person-hd">
+            <span class="ma-dot" style="background:${color}"></span>
+            <span class="ma-person-name">${name}</span>
+            <span class="ma-count">${data.done}/${data.total} done</span>
+          </div>
+          <div class="ma-person-body">${secHtml}</div>
+        </div>`
+      }).join('')}
+    </div>
+  </div>`
+}
+
+function buildTransferHtml(p) {
+  const log  = p.transferLog || []
+  const pend = p.pendingTransfer
+  if (!log.length && !pend) return ''
+  const logHtml = log.map(t => `
+    <div class="mt-block">
+      <span>🔄</span>
+      <span class="mt-label">Transferred: <strong>${t.from}</strong> → <strong>${t.to}</strong></span>
+      <span class="mt-dates">Sent ${fmtDate(t.sentDate)} · Accepted ${fmtDate(t.acceptedDate)}</span>
+    </div>`).join('')
+  const pendHtml = pend ? `
+    <div class="mt-block">
+      <span>⏳</span>
+      <span class="mt-pending">Transfer pending: <strong>${pend.from || p.owner}</strong> → <strong>${pend.to}</strong></span>
+      ${pend.sentDate ? `<span class="mt-dates">Sent ${fmtDate(pend.sentDate)}</span>` : ''}
+    </div>` : ''
+  return logHtml + pendHtml
+}
+
+function renderMasterView() {
+  // Global totals
+  const allTasks = PROJECTS.reduce((acc, p) => {
+    const { total, done } = getProjectProgress(p.id)
+    acc.total += total; acc.done += done; return acc
+  }, { total: 0, done: 0 })
+  const activeCount    = PROJECTS.filter(p => !p.released).length
+  const deliveredCount = PROJECTS.filter(p => p.released).length
+  document.getElementById('master-sub').textContent =
+    `${PEOPLE.length} team members · ${activeCount} active project${activeCount !== 1 ? 's' : ''} · ${allTasks.done}/${allTasks.total} tasks done`
+
+  if (masterTab === 'person') renderMasterByPerson()
+  else                        renderMasterByProject()
+}
+
+function renderMasterByPerson() {
+  const allTasksDone  = PROJECTS.reduce((acc, p) => { const {total,done} = getProjectProgress(p.id); acc.total+=total; acc.done+=done; return acc }, {total:0,done:0})
+  const globalPct     = allTasksDone.total > 0 ? Math.round(allTasksDone.done/allTasksDone.total*100) : 0
+
+  const summaryHtml = `
+    <div class="summary-bar">
+      <div class="summary-chip"><div class="summary-chip-val">${PEOPLE.length}</div><div class="summary-chip-lbl">Members</div></div>
+      <div class="summary-chip"><div class="summary-chip-val">${PROJECTS.filter(p=>!p.released).length}</div><div class="summary-chip-lbl">Active Projects</div></div>
+      <div class="summary-chip"><div class="summary-chip-val">${allTasksDone.done}</div><div class="summary-chip-lbl">Tasks Done</div></div>
+      <div class="summary-chip"><div class="summary-chip-val">${globalPct}%</div><div class="summary-chip-lbl">Overall</div></div>
+    </div>`
+
+  const _projCount = name => PROJECTS.filter(p => p.owner === name || (p.collaborators||[]).includes(name)).length
+  const cards = [...PEOPLE].sort((a, b) => _projCount(b.name) - _projCount(a.name)).map(person => {
+    const myProjects = PROJECTS.filter(p =>
+      p.owner === person.name ||
+      (p.collaborators||[]).includes(person.name) ||
+      (p.pendingTeamUps||[]).some(r => r.name === person.name)
+    )
+    const byDate    = (a, b) => new Date(b.startDate) - new Date(a.startDate)
+    const active    = myProjects.filter(p => !p.released).sort(byDate)
+    const delivered = myProjects.filter(p => p.released).sort(byDate)
+
+    // Tasks assigned to this person across all projects
+    let assignedDone = 0, assignedTotal = 0
+    PROJECTS.forEach(p => {
+      SECTIONS.forEach(s => {
+        const tasks = TASKS[p.id]?.[s.id] || []
+        const done  = DONE[p.id]?.[s.id] || {}
+        tasks.filter(t => t.worker === person.name).forEach(t => {
+          assignedTotal++
+          if (done[t.id]?.done) assignedDone++
+        })
+      })
+    })
+
+    // Overall contribution across owned projects
+    let ownedTotal = 0, ownedDone = 0
+    active.filter(p => p.owner === person.name).forEach(p => {
+      const prog = getProjectProgress(p.id); ownedTotal += prog.total; ownedDone += prog.done
+    })
+    const ownedPct = ownedTotal > 0 ? Math.round(ownedDone/ownedTotal*100) : 0
+
+    const statusChip = person.status === 'full'
+      ? `<span style="font-size:.6rem;font-weight:600;background:#fff7ed;color:var(--orange);border:1px solid rgba(234,88,12,.2);border-radius:20px;padding:2px 7px">Full</span>`
+      : `<span style="font-size:.6rem;font-weight:600;background:var(--green-bg);color:var(--green);border:1px solid rgba(22,163,74,.25);border-radius:20px;padding:2px 7px">Available</span>`
+
+    const projectRows = active.map(p => {
+      const isOwner = p.owner === person.name
+      const prog    = getProjectProgress(p.id)
+      const pct     = prog.total > 0 ? Math.round(prog.done/prog.total*100) : 0
+      const days    = daysSince(p.startDate)
+      const color   = pct === 100 ? 'var(--green)' : pct >= 50 ? 'var(--blue)' : '#f59e0b'
+      const role    = isOwner ? 'Owner' : (p.collaborators||[]).includes(person.name) ? 'Collaborator' : 'Pending'
+      return `
+        <div class="proj-box" style="border-left-color:${color}">
+          <div class="proj-box-header">
+            <span class="proj-box-name">${p.name}</span>
+            <span class="proj-box-role">${role}</span>
+            <div class="proj-box-bar"><div class="proj-box-fill" style="width:${pct}%;background:${color}"></div></div>
+            <span class="proj-box-pct" style="color:${color}">${pct}%</span>
+          </div>
+          <div class="proj-box-meta">
+            ${days !== null ? `<span>📅 ${fmtDate(p.startDate)} <strong>(${days}d ago)</strong></span>` : ''}
+            ${prog.total > 0 ? `<span>✓ <strong>${prog.done}/${prog.total}</strong> tasks</span>` : '<span>No tasks yet</span>'}
+            ${p.revision > 0 ? `<span style="color:var(--orange)">↩ R${p.revision}</span>` : ''}
+          </div>
+          ${buildAssignmentHtml(p.id)}
+          ${buildTransferHtml(p)}
+        </div>`
+    }).join('')
+
+    const noProjects = active.length === 0
+      ? `<div style="padding:16px 0;color:var(--muted);font-size:.78rem;text-align:center">No active projects</div>`
+      : ''
+
+    return `
+      <div class="master-card">
+        <div class="master-card-header">
+          <div class="master-avatar" style="background:${person.color}">${person.initials}</div>
+          <div style="flex:1;min-width:0">
+            <div class="master-name">${person.name} ${statusChip}</div>
+            <div class="master-sub">${active.length} active · ${delivered.length} delivered</div>
+          </div>
+        </div>
+        <div class="master-stats">
+          <div class="master-stat"><div class="master-stat-val">${active.filter(p=>p.owner===person.name).length}</div><div class="master-stat-lbl">Owned</div></div>
+          <div class="master-stat"><div class="master-stat-val">${active.filter(p=>p.owner!==person.name).length}</div><div class="master-stat-lbl">Collab</div></div>
+          <div class="master-stat"><div class="master-stat-val">${assignedTotal > 0 ? Math.round(assignedDone/assignedTotal*100) : '—'}${assignedTotal > 0 ? '%' : ''}</div><div class="master-stat-lbl">My Tasks</div></div>
+          <div class="master-stat"><div class="master-stat-val">${assignedDone}/${assignedTotal}</div><div class="master-stat-lbl">Done/Total</div></div>
+        </div>
+        ${projectRows}${noProjects}
+      </div>`
+  }).join('')
+
+  document.getElementById('master-content').innerHTML = summaryHtml + cards
+}
+
+function renderMasterByProject() {
+  const R = 22, C = 2 * Math.PI * R
+  const byDate    = (a, b) => new Date(b.startDate) - new Date(a.startDate)
+  const active    = PROJECTS.filter(p => !p.released).sort(byDate)
+  const delivered = PROJECTS.filter(p => p.released).sort(byDate)
+
+  const allTasks = PROJECTS.reduce((acc,p)=>{ const g=getProjectProgress(p.id); acc.t+=g.total; acc.d+=g.done; return acc },{t:0,d:0})
+  const summaryHtml = `
+    <div class="summary-bar">
+      <div class="summary-chip"><div class="summary-chip-val">${active.length}</div><div class="summary-chip-lbl">Active</div></div>
+      <div class="summary-chip"><div class="summary-chip-val">${delivered.length}</div><div class="summary-chip-lbl">Delivered</div></div>
+      <div class="summary-chip"><div class="summary-chip-val">${allTasks.d}</div><div class="summary-chip-lbl">Tasks Done</div></div>
+      <div class="summary-chip"><div class="summary-chip-val">${allTasks.t > 0 ? Math.round(allTasks.d/allTasks.t*100) : 0}%</div><div class="summary-chip-lbl">Overall</div></div>
+    </div>`
+
+  function buildProjectCard(p) {
+    const prog  = getProjectProgress(p.id)
+    const pct   = prog.total > 0 ? Math.round(prog.done/prog.total*100) : 0
+    const dash  = C - (C * pct / 100)
+    const days  = daysSince(p.startDate)
+    const isDone = pct === 100 && prog.total > 0
+    const strokeColor = p.released ? 'var(--green)' : isDone ? 'var(--green)' : 'var(--blue)'
+
+    const ownerPerson = PEOPLE.find(m => m.name === p.owner)
+    const collabs     = (p.collaborators || []).map(n => PEOPLE.find(m => m.name === n)).filter(Boolean)
+    const pending     = (p.pendingTeamUps || []).map(r => PEOPLE.find(m => m.name === r.name)).filter(Boolean)
+
+    const teamChips = [
+      ownerPerson ? `<div class="proj-team-chip"><div class="proj-team-dot" style="background:${ownerPerson.color}">${ownerPerson.initials}</div>${ownerPerson.name} <span style="color:var(--muted);font-size:.6rem">(PIC)</span></div>` : '',
+      ...collabs.map(m => `<div class="proj-team-chip"><div class="proj-team-dot" style="background:${m.color}">${m.initials}</div>${m.name}</div>`),
+      ...pending.map(m => `<div class="proj-team-chip" style="opacity:.55"><div class="proj-team-dot" style="background:${m.color}">⏳</div>${m.name} <span style="color:var(--orange);font-size:.6rem">(pending)</span></div>`),
+    ].join('')
+
+    const sectionBars = SECTIONS.map(s => {
+      const sp   = getSectionProgress(p.id, s.id)
+      const spct = sp.total > 0 ? Math.round(sp.done/sp.total*100) : 0
+      const sdone = spct === 100 && sp.total > 0
+      const shortName = s.name.replace(/^\d+\s*—\s*/, '')
+      return `
+        <div class="sec-row">
+          <div class="sec-row-top">
+            <span class="sec-name">${shortName}</span>
+            <span class="sec-pct">${sp.total > 0 ? spct + '%' : '—'}</span>
+          </div>
+          <div class="sec-bar"><div class="sec-fill ${sdone ? 'done' : ''}" style="width:${spct}%"></div></div>
+        </div>`
+    }).join('')
+
+    const statusBadge = p.released
+      ? `<span style="font-size:.62rem;font-weight:600;background:var(--green-bg);color:var(--green);border:1px solid rgba(22,163,74,.25);border-radius:20px;padding:2px 8px">Delivered ✓</span>`
+      : isDone
+        ? `<span style="font-size:.62rem;font-weight:600;background:var(--green-bg);color:var(--green);border:1px solid rgba(22,163,74,.25);border-radius:20px;padding:2px 8px">Complete</span>`
+        : p.revision > 0
+          ? `<span style="font-size:.62rem;font-weight:600;background:#fff7ed;color:var(--orange);border:1px solid rgba(234,88,12,.2);border-radius:20px;padding:2px 8px">Revision R${p.revision}</span>`
+          : ''
+
+    return `
+      <div class="master-card">
+        <div class="master-card-header">
+          <div class="proj-ring-wrap">
+            <svg width="52" height="52" viewBox="0 0 52 52">
+              <circle class="ring-bg-ov" cx="26" cy="26" r="${R}"/>
+              <circle class="ring-fill-ov ${isDone||p.released?'done':''}" cx="26" cy="26" r="${R}"
+                stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${dash.toFixed(1)}"/>
+            </svg>
+            <div class="proj-ring-pct">${pct}%</div>
+          </div>
+          <div style="flex:1;min-width:0">
+            <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">
+              <div class="master-name">${p.name}</div>
+              ${statusBadge}
+            </div>
+            <div class="proj-meta-row">
+              ${days !== null ? `<div class="proj-meta-item">📅 Started <strong>${fmtDate(p.startDate)}</strong></div>` : ''}
+              ${days !== null ? `<div class="proj-meta-item">⏱ <strong>${days} day${days!==1?'s':''}</strong> running</div>` : ''}
+              <div class="proj-meta-item">✓ <strong>${prog.done}/${prog.total}</strong> tasks</div>
+            </div>
+          </div>
+        </div>
+        <div class="proj-team-row">${teamChips || '<span style="font-size:.7rem;color:var(--muted)">No team set</span>'}</div>
+        <div class="sec-grid">${sectionBars}</div>
+        ${buildAssignmentHtml(p.id) || buildTransferHtml(p) ? `
+        <div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(17,17,17,.06)">
+          ${buildAssignmentHtml(p.id)}
+          ${buildTransferHtml(p)}
+        </div>` : ''}
+      </div>`
+  }
+
+  const activeCards    = active.map(buildProjectCard).join('')
+  const deliveredCards = delivered.length
+    ? `<div class="section-divider">Delivered <span class="divider-count">${delivered.length}</span></div>` + delivered.map(buildProjectCard).join('')
+    : ''
+
+  document.getElementById('master-content').innerHTML = summaryHtml + (activeCards || `<div style="text-align:center;padding:32px;color:var(--muted)">No active projects</div>`) + deliveredCards
+}
+
+/* ════════════════════════════════════════════
+   TRASH
+════════════════════════════════════════════ */
+function renderTrashView() {
+  if (!activePerson) return
+  const name  = activePerson.name
+  const items = getActiveTrash(name)
+
+  document.getElementById('trash-title').textContent  = `Trash — ${name}`
+  document.getElementById('trash-sub').textContent    = items.length
+    ? `${items.length} item${items.length > 1 ? 's' : ''} · items are permanently deleted after 7 days`
+    : 'Trash is empty'
+  const clearBtn = document.getElementById('trash-clear-btn')
+  if (clearBtn) clearBtn.style.display = items.length ? '' : 'none'
+
+  if (!items.length) {
+    document.getElementById('trash-list').innerHTML =
+      `<div class="trash-empty">🗑 Trash is empty<br><span style="font-size:.72rem">No deleted items</span></div>`
+    return
+  }
+
+  // Sort newest first
+  const sorted = [...items].sort((a, b) => b.deletedAt - a.deletedAt)
+  document.getElementById('trash-list').innerHTML = sorted.map(item => {
+    const { label, cls } = trashExpiryLabel(item.deletedAt)
+    let title = '—', meta = '', typeTag = ''
+    if (item.type === 'task') {
+      title   = item.data.task.text
+      meta    = `${item.data.projectName} › ${item.data.sectionName}`
+      if (item.data.task.worker) meta += ` · assigned: ${item.data.task.worker}`
+      typeTag = `<span style="font-size:.6rem;font-weight:600;background:var(--blue-bg);color:var(--blue);border-radius:20px;padding:1px 7px;margin-right:6px">Task</span>`
+    } else if (item.type === 'project') {
+      title   = item.data.project.name
+      const { total, done } = item.data.progress
+      meta    = `Owner: ${item.data.project.owner} · ${done}/${total} tasks done`
+      typeTag = `<span style="font-size:.6rem;font-weight:600;background:#f5f3ff;color:#7c3aed;border-radius:20px;padding:1px 7px;margin-right:6px">Project</span>`
+    }
+    const tid = item.trashId.replace(/[^a-z0-9]/gi, '_')
+    return `
+      <div class="trash-card">
+        <div class="trash-card-top">
+          <div>
+            <div class="trash-card-name">${typeTag}${title}</div>
+            <div class="trash-card-meta">${meta}</div>
+          </div>
+          <span class="trash-card-expiry ${cls}">${label}</span>
+        </div>
+        <div class="trash-card-btns">
+          <button class="trash-restore-btn" onclick="restoreFromTrash('${name}','${item.trashId}')">↩ Restore</button>
+          <button class="trash-delete-btn"  onclick="deletePermanently('${name}','${item.trashId}')">Delete forever</button>
+        </div>
+      </div>`
+  }).join('')
+}
+
+function deleteProject(pid) {
+  const p = PROJECTS.find(q => q.id === pid)
+  if (!p || p.owner !== activePerson?.name) return
+  const progress = getProjectProgress(pid)
+  // Snapshot tasks and section data
+  const tasksSnapshot = {}
+  const doneSnapshot  = {}
+  const secSnapshot   = {}
+  SECTIONS.forEach(s => {
+    tasksSnapshot[s.id] = (TASKS[pid]?.[s.id] || []).map(t => ({ ...t }))
+    doneSnapshot[s.id]  = { ...(DONE[pid]?.[s.id] || {}) }
+    secSnapshot[s.id]   = { ...(SECTION_DATA[pid]?.[s.id] || {}) }
+  })
+  addToTrash(activePerson.name, 'project', {
+    project: { ...p },
+    tasks: tasksSnapshot,
+    done:  doneSnapshot,
+    sectionData: secSnapshot,
+    progress
+  })
+  PROJECTS.splice(PROJECTS.indexOf(p), 1)
+  delete TASKS[pid]; delete DONE[pid]; delete SECTION_DATA[pid]
+  toast(`"${p.name}" moved to Trash`)
+  renderProjects()
+}
+
+function restoreFromTrash(personName, trashId) {
+  const idx  = (TRASH[personName] || []).findIndex(i => i.trashId === trashId)
+  if (idx === -1) return
+  const item = TRASH[personName][idx]
+  if (item.type === 'task') {
+    const { task, pid, sid } = item.data
+    if (!TASKS[pid]) initTaskData(pid)
+    if (!TASKS[pid][sid]) TASKS[pid][sid] = []
+    const existing = TASKS[pid][sid]
+    const newId    = existing.length > 0 ? Math.max(...existing.map(t => t.id)) + 1 : 1
+    existing.push({ id: newId, text: task.text, worker: task.worker, workerStatus: task.workerStatus })
+    if (!DONE[pid])      DONE[pid]      = {}
+    if (!DONE[pid][sid]) DONE[pid][sid] = {}
+    DONE[pid][sid][newId] = { done: task.done || false }
+    toast('Task restored ✓')
+  } else if (item.type === 'project') {
+    const { project, tasks, done, sectionData } = item.data
+    // Avoid id collision
+    const newId = PROJECTS.length > 0 ? Math.max(...PROJECTS.map(q => q.id)) + 1 : 1
+    const restored = { ...project, id: newId }
+    PROJECTS.push(restored)
+    TASKS[newId] = {}; DONE[newId] = {}; SECTION_DATA[newId] = {}
+    SECTIONS.forEach(s => {
+      TASKS[newId][s.id]       = (tasks[s.id] || []).map(t => ({ ...t }))
+      DONE[newId][s.id]        = { ...(done[s.id] || {}) }
+      SECTION_DATA[newId][s.id]= { ...(sectionData[s.id] || { assignee:null, assigneeStatus:null, collaborators:[], pendingTeamUps:[] }) }
+    })
+    toast(`"${project.name}" restored ✓`)
+  }
+  TRASH[personName].splice(idx, 1)
+  renderTrashView()
+}
+
+function deletePermanently(personName, trashId) {
+  TRASH[personName] = (TRASH[personName] || []).filter(i => i.trashId !== trashId)
+  toast('Item permanently deleted')
+  renderTrashView()
+}
+
+function clearAllTrash() {
+  if (!activePerson) return
+  TRASH[activePerson.name] = []
+  toast('Trash cleared')
+  renderTrashView()
+}
+
+/* ════════════════════════════════════════════
+   TEAM UP (add collaborator)
+════════════════════════════════════════════ */
+function openTeamUpModal(projectId) {
+  const p = PROJECTS.find(q => q.id === projectId)
+  teamUpProjectId = projectId; pickedMemberId = null
+  const already   = [p.owner, ...(p.collaborators || []), ...(p.pendingTeamUps||[]).map(r=>r.name)]
+  const options   = PEOPLE.filter(m => !already.includes(m.name) && m.name !== activePerson?.name)
+  document.getElementById('teamup-modal-hint').textContent = `Add a collaborator to "${p.name}". They will see this project in their list too.`
+  document.getElementById('teamup-options').innerHTML = options.length
+    ? options.map(m => {
+        const isFull = m.status === 'full'
+        return isFull
+          ? `<button class="member-pick-btn" disabled style="opacity:.45;cursor:not-allowed">
+              <div class="member-pick-avatar" style="background:${m.color}">${m.initials}</div>
+              <div class="member-pick-name" style="color:var(--red)">${m.name} <span style="font-size:.65rem;font-weight:500">— Full</span></div>
+            </button>`
+          : `<button class="member-pick-btn" id="upick_${m.id}" onclick="pickMember('upick','${m.id}')">
+              <div class="member-pick-avatar" style="background:${m.color}">${m.initials}</div>
+              <div class="member-pick-name">${m.name}</div>
+            </button>`
+      }).join('')
+    : `<p style="font-size:.82rem;color:var(--muted);padding:8px 0">Everyone is already on this project.</p>`
+  document.getElementById('teamup-modal').classList.add('open')
+}
+function closeTeamUpModal() {
+  document.getElementById('teamup-modal').classList.remove('open')
+  teamUpProjectId = null; pickedMemberId = null
+}
+function confirmTeamUp() {
+  if (!pickedMemberId || !teamUpProjectId) return
+  const p      = PROJECTS.find(q => q.id === teamUpProjectId)
+  const target = PEOPLE.find(m => m.id === pickedMemberId)
+  if (!p.pendingTeamUps) p.pendingTeamUps = []
+  if (!p.pendingTeamUps.some(r => r.name === target.name)) {
+    p.pendingTeamUps.push({ name: target.name })
+  }
+  closeTeamUpModal()
+  toast(`Team-up invitation sent to ${target.name} — waiting for acceptance`)
+  renderProjects()
+}
+
+function pickMember(prefix, memberId) {
+  pickedMemberId = memberId
+  document.querySelectorAll(`[id^="${prefix}_"]`).forEach(el => el.classList.remove('selected'))
+  document.getElementById(prefix + '_' + memberId).classList.add('selected')
+}
+
+function removeCollab(projectId, personName) {
+  const p = PROJECTS.find(q => q.id === projectId)
+  p.collaborators = (p.collaborators || []).filter(c => c !== personName)
+  cascadeRemovePerson(projectId, personName)
+  toast(`${personName} removed — their assignments cleared`)
+  renderProjects()
+}
+
+function cancelTransfer(pid) {
+  const p = PROJECTS.find(q => q.id === pid)
+  p.pendingTransfer = null
+  saveState()
+  toast('Transfer request cancelled')
+  renderProjects()
+}
+
+function cancelTeamUp(pid, personName) {
+  const p = PROJECTS.find(q => q.id === pid)
+  p.pendingTeamUps = (p.pendingTeamUps||[]).filter(r => r.name !== personName)
+  toast(`Team-up invitation to ${personName} cancelled`)
+  renderProjects()
+}
+
+/* ════════════════════════════════════════════
+   SECTION ASSIGN
+════════════════════════════════════════════ */
+function _openSectionModal(sectionId, mode) {
+  sectionActionMode   = mode
+  sectionActionSid    = sectionId
+  pickedSectionMember = null
+  const pid     = activeProject.id
+  const secData = SECTION_DATA[pid][sectionId] || {}
+
+  const isTransfer = mode === 'transfer'
+  document.getElementById('sec-action-title').textContent = isTransfer ? '→ Transfer Full Section' : '+ Team Up for this Section'
+  document.getElementById('sec-action-hint').textContent  = isTransfer
+    ? 'The recipient will preview all tasks inside before deciding. If accepted, they take full responsibility for this section.'
+    : 'Invite a team member to collaborate. They can preview inside before accepting.'
+  document.getElementById('btn-confirm-section-action').textContent = isTransfer ? 'Transfer' : 'Invite'
+
+  const already = isTransfer
+    ? [activePerson?.name]
+    : [activePerson?.name, ...(secData.collaborators||[]), ...(secData.pendingTeamUps||[]).map(r=>r.name)]
+
+  const members = getProjectMembers(activeProject.id).filter(m => !already.includes(m.name))
+  const current = isTransfer ? secData.assignee : null
+
+  document.getElementById('sec-action-options').innerHTML = members.length
+    ? members.map(m => {
+        const isFull = m.status === 'full'
+        return isFull
+          ? `<button class="member-pick-btn" disabled style="opacity:.45;cursor:not-allowed">
+              <div class="member-pick-avatar" style="background:${m.color}">${m.initials}</div>
+              <div class="member-pick-name" style="color:var(--red)">${m.name} <span style="font-size:.65rem;font-weight:500">— Full</span></div>
+            </button>`
+          : `<button class="member-pick-btn ${current === m.name ? 'selected' : ''}" id="sacpick_${m.id}" onclick="pickSectionMember('${m.id}')">
+              <div class="member-pick-avatar" style="background:${m.color}">${m.initials}</div>
+              <div class="member-pick-name">${m.name}</div>
+            </button>`
+      }).join('')
+    : `<p style="font-size:.82rem;color:var(--muted);padding:8px 0">No available team members to add.</p>`
+
+  if (isTransfer && current) {
+    const existing = PEOPLE.find(p => p.name === current)
+    if (existing) pickedSectionMember = existing.id
+  }
+  document.getElementById('sec-action-clear').style.display = (isTransfer && current) ? 'block' : 'none'
+  document.getElementById('section-action-modal').classList.add('open')
+}
+
+function openSectionTransfer(sectionId) { _openSectionModal(sectionId, 'transfer') }
+function openSectionTeamUp(sectionId)   { _openSectionModal(sectionId, 'teamup')   }
+
+function pickSectionMember(memberId) {
+  pickedSectionMember = memberId
+  document.querySelectorAll('[id^="sacpick_"]').forEach(el => el.classList.remove('selected'))
+  document.getElementById('sacpick_' + memberId)?.classList.add('selected')
+}
+
+function closeSectionActionModal() {
+  document.getElementById('section-action-modal').classList.remove('open')
+  sectionActionSid = null; sectionActionMode = null; pickedSectionMember = null
+}
+
+function confirmSectionAction() {
+  if (!pickedSectionMember) return
+  const pid    = activeProject.id
+  const member = PEOPLE.find(p => p.id === pickedSectionMember)
+  const sec    = SECTION_DATA[pid][sectionActionSid]
+  if (sectionActionMode === 'transfer') {
+    sec.assignee       = member.name
+    sec.assigneeStatus = 'pending'
+    toast(`Transfer offer sent to ${member.name} — they can preview inside first`)
+  } else {
+    if (!sec.pendingTeamUps) sec.pendingTeamUps = []
+    if (!sec.pendingTeamUps.some(r => r.name === member.name)) {
+      sec.pendingTeamUps.push({ name: member.name })
+    }
+    toast(`Team-up invite sent to ${member.name}`)
+  }
+  saveState()
+  closeSectionActionModal()
+  if (currentView === 'sections') renderSectionsView()
+  else renderItemsView()
+}
+
+function clearSectionAction() {
+  const pid = activeProject.id
+  const sec  = SECTION_DATA[pid][sectionActionSid]
+  sec.assignee = null; sec.assigneeStatus = null
+  closeSectionActionModal()
+  toast('Transfer cancelled')
+  if (currentView === 'sections') renderSectionsView()
+  else renderItemsView()
+}
+
+function cancelSectionTransfer(sectionId) {
+  const pid = activeProject.id
+  const sec  = SECTION_DATA[pid][sectionId]
+  const old  = sec?.assignee
+  sec.assignee = null; sec.assigneeStatus = null
+  if (old) clearSectionTasksForPerson(pid, sectionId, old)
+  toast('Transfer cancelled — their task assignments cleared')
+  if (currentView === 'sections') renderSectionsView()
+  else { expandedTaskAssign = null; renderItemsView() }
+}
+
+function cancelSectionTeamUpInvite(sectionId, personName) {
+  const pid = activeProject.id
+  const sec  = SECTION_DATA[pid][sectionId]
+  sec.pendingTeamUps = (sec.pendingTeamUps||[]).filter(r => r.name !== personName)
+  toast(`Invite to ${personName} cancelled`)
+  if (currentView === 'sections') renderSectionsView()
+  else renderItemsView()
+}
+
+function removeSectionCollaborator(sectionId, personName) {
+  const pid = activeProject.id
+  const sec  = SECTION_DATA[pid][sectionId]
+  sec.collaborators = (sec.collaborators||[]).filter(c => c !== personName)
+  clearSectionTasksForPerson(pid, sectionId, personName)
+  toast(`${personName} removed from section`)
+  if (currentView === 'sections') renderSectionsView()
+  else renderItemsView()
+}
+
+function clearSectionTasksForPerson(pid, sid, personName) {
+  ;(TASKS[pid]?.[sid] || []).forEach(t => {
+    if (t.worker === personName) { t.worker = null; t.workerStatus = null }
+  })
+}
+
+function clearTasksForPerson(pid, personName) {
+  SECTIONS.forEach(s => clearSectionTasksForPerson(pid, s.id, personName))
+}
+
+function formatProjectDate(dateStr) {
+  if (!dateStr) return '—'
+  const d = new Date(dateStr)
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+}
+
+function getProjectDuration(dateStr) {
+  if (!dateStr) return ''
+  const start = new Date(dateStr)
+  const now   = new Date('2026-05-19')
+  const days  = Math.floor((now - start) / 86400000)
+  if (days < 1)  return 'Started today'
+  if (days < 7)  return `${days}d running`
+  if (days < 30) return `${Math.floor(days / 7)}w running`
+  const months = Math.floor(days / 30)
+  return `${months}mo running`
+}
+
+/* ════════════════════════════════════════════
+   INLINE CONFIRM
+════════════════════════════════════════════ */
+function initConfirm(type, id, action, personName) {
+  pendingConfirmState = {
+    type,
+    id: ['task', 'deleteTask', 'projectTransfer', 'projectTeamUp', 'leaveProject'].includes(type) ? Number(id) : id,
+    action,
+    personName: personName || null
+  }
+  if (currentView === 'items')    renderItemsView()
+  if (currentView === 'sections') renderSectionsView()
+  if (currentView === 'projects') renderProjects()
+}
+
+function cancelPendingConfirm() {
+  pendingConfirmState = null
+  editingTaskId = null
+  if (currentView === 'items')    renderItemsView()
+  if (currentView === 'sections') renderSectionsView()
+  if (currentView === 'projects') renderProjects()
+}
+
+function confirmPendingAction() {
+  if (!pendingConfirmState) return
+  const { type, id, action, personName } = pendingConfirmState
+  pendingConfirmState = null
+
+  if (type === 'task') {
+    const pid  = activeProject.id
+    const sid  = activeSection.id
+    const task = (TASKS[pid]?.[sid] || []).find(t => t.id === id)
+    if (!task) return
+    if (action === 'accept' || action === 'reaccept') {
+      task.workerStatus = 'accepted'
+      saveState()
+      toast('Task accepted ✓')
+      renderItemsView()
+    } else if (action === 'decline') {
+      TASKS[pid][sid] = (TASKS[pid][sid] || []).filter(t => t.id !== id)
+      delete (DONE[pid]?.[sid] || {})[id]
+      saveState()
+      toast('Task declined — removed')
+      renderItemsView()
+    } else if (action === 'resign') {
+      task.worker = null; task.workerStatus = null
+      saveState()
+      toast('Resigned from task — now unassigned')
+      renderItemsView()
+    }
+
+  } else if (type === 'deleteTask') {
+    const pid  = activeProject.id
+    const sid  = activeSection.id
+    const task = (TASKS[pid]?.[sid] || []).find(t => t.id === id)
+    if (task) {
+      const trashOwner = activePerson?.name
+      const proj = PROJECTS.find(p => p.id === pid)
+      const sec  = SECTIONS.find(s => s.id === sid)
+      addToTrash(trashOwner, 'task', {
+        task: { ...task, done: !!(DONE[pid]?.[sid]?.[task.id]?.done) },
+        pid, sid,
+        projectName: proj?.name || '—',
+        sectionName: sec?.name || '—'
+      })
+      TASKS[pid][sid] = TASKS[pid][sid].filter(t => t.id !== id)
+      delete (DONE[pid]?.[sid] || {})[id]
+    }
+    expandedTaskAssign = null; editingTaskId = null
+    saveState()
+    toast('Task moved to Trash')
+    renderItemsView()
+
+  } else if (type === 'section') {
+    const pid = activeProject.id
+    const sid = id  // id here is the sectionId
+    if (action === 'accept') {
+      const recipient = SECTION_DATA[pid][sid].assignee
+      SECTION_DATA[pid][sid].assigneeStatus = 'accepted'
+      // Auto-assign all unassigned tasks in THIS section only
+      ;(TASKS[pid]?.[sid] || []).forEach(t => {
+        if (!t.worker) { t.worker = recipient; t.workerStatus = 'accepted' }
+      })
+      saveState()
+      toast('Section transfer accepted — unassigned tasks in this section assigned to you ✓')
+    } else {
+      const old = SECTION_DATA[pid][sid]?.assignee
+      if (old) clearSectionTasksForPerson(pid, sid, old)
+      SECTION_DATA[pid][sid].assignee = null; SECTION_DATA[pid][sid].assigneeStatus = null
+      saveState()
+      toast('Section transfer declined')
+    }
+    expandedTaskAssign = null
+    if (currentView === 'sections') renderSectionsView()
+    else renderItemsView()
+
+  } else if (type === 'removeTaskWorker') {
+    const task = (TASKS[activeProject.id]?.[activeSection.id] || []).find(t => t.id === id)
+    if (task) { task.worker = null; task.workerStatus = null; saveState(); toast('Assignment removed') }
+    renderItemsView()
+
+  } else if (type === 'projectTransfer') {
+    const p = PROJECTS.find(q => q.id === id)
+    if (!p) return
+    if (action === 'accept') {
+      if (!p.transferLog) p.transferLog = []
+      p.transferLog.push({ from: p.pendingTransfer.from || p.owner, to: p.pendingTransfer.to, sentDate: p.pendingTransfer.sentDate || null, acceptedDate: new Date().toISOString().slice(0,10) })
+      p.owner = p.pendingTransfer.to
+      p.pendingTransfer = null
+      saveState()
+      toast(`Project "${p.name}" accepted — now yours ✓`)
+    } else {
+      p.pendingTransfer = null
+      saveState()
+      toast(`Transfer declined`)
+    }
+    renderProjects()
+
+  } else if (type === 'projectTeamUp') {
+    const p = PROJECTS.find(q => q.id === id)
+    if (!p) return
+    p.pendingTeamUps = (p.pendingTeamUps||[]).filter(r => r.name !== personName)
+    if (action === 'accept') {
+      if (!p.collaborators) p.collaborators = []
+      p.collaborators.push(personName)
+      saveState()
+      toast(`You joined "${p.name}" ✓`)
+    } else {
+      saveState()
+      toast(`Team-up declined`)
+    }
+    renderProjects()
+
+  } else if (type === 'leaveProject') {
+    const p = PROJECTS.find(q => q.id === id)
+    if (p && activePerson) {
+      p.collaborators = (p.collaborators || []).filter(c => c !== activePerson.name)
+      cascadeRemovePerson(p.id, activePerson.name)
+      saveState()
+      toast(`Left "${p.name}" — your assignments cleared`)
+    }
+    renderProjects()
+
+  } else if (type === 'withdrawSection') {
+    const pid = activeProject?.id
+    if (pid) {
+      const oldAssignee = SECTION_DATA[pid]?.[id]?.assignee
+      if (oldAssignee) clearSectionTasksForPerson(pid, id, oldAssignee)
+      SECTION_DATA[pid][id].assignee = null
+      SECTION_DATA[pid][id].assigneeStatus = null
+      saveState()
+    }
+    expandedTaskAssign = null
+    toast('Left section — your task assignments cleared')
+    if (currentView === 'sections') renderSectionsView()
+    else renderItemsView()
+
+  } else if (type === 'sectionTeamUp') {
+    const pid = activeProject?.id
+    if (pid) {
+      const sec = SECTION_DATA[pid][id]
+      sec.pendingTeamUps = (sec.pendingTeamUps||[]).filter(r => r.name !== personName)
+      if (action === 'accept') {
+        if (!sec.collaborators) sec.collaborators = []
+        sec.collaborators.push(personName)
+        saveState()
+        toast('Joined section team ✓')
+      } else {
+        saveState()
+        toast('Section team-up declined')
+      }
+    }
+    if (currentView === 'sections') renderSectionsView()
+    else renderItemsView()
+
+  } else if (type === 'leaveSection') {
+    const pid = activeProject?.id
+    if (pid) {
+      const sec = SECTION_DATA[pid][id]
+      sec.collaborators = (sec.collaborators||[]).filter(c => c !== personName)
+      clearSectionTasksForPerson(pid, id, personName)
+      saveState()
+      toast('Left section — your task assignments cleared')
+    }
+    if (currentView === 'sections') renderSectionsView()
+    else renderItemsView()
+
+  } else if (type === 'removeSectionCollab') {
+    const pid = activeProject?.id
+    if (pid) {
+      const sec = SECTION_DATA[pid][id]
+      sec.collaborators = (sec.collaborators||[]).filter(c => c !== personName)
+      clearSectionTasksForPerson(pid, id, personName)
+      saveState()
+      toast(`${personName} removed from section`)
+    }
+    if (currentView === 'sections') renderSectionsView()
+    else renderItemsView()
+  }
+}
+
+function toast(msg) {
+  const t = document.getElementById('toast')
+  t.textContent = msg; t.classList.add('show')
+  setTimeout(() => t.classList.remove('show'), 2500)
+}
+
+/* ════════════════════════════════════════════
+   FIREBASE
+════════════════════════════════════════════ */
+firebase.initializeApp({
+  apiKey:            "AIzaSyAO4VmHDOSxUidHH1m4TfDRGWoWbXSaup4",
+  authDomain:        "bae-checklist-for-design.firebaseapp.com",
+  projectId:         "bae-checklist-for-design",
+  storageBucket:     "bae-checklist-for-design.firebasestorage.app",
+  messagingSenderId: "340863437607",
+  appId:             "1:340863437607:web:8c5f79a13343aae3deb702"
+})
+const _auth = firebase.auth()
+const _db   = firebase.firestore()
+const _googleProvider = new firebase.auth.GoogleAuthProvider()
+_googleProvider.setCustomParameters({ hd: 'bangunasaecos.com' })
+
+let _fbUser = null
+let _unsubState = null
+
+function doSignIn()  { _auth.signInWithPopup(_googleProvider).catch(e => showLoginErr(e.message)) }
+function doSignOut() { SESSION.personId = null; SESSION.isMaster = false; _auth.signOut() }
+
+function showLoginErr(msg) {
+  const el = document.getElementById('login-err')
+  if (el) { el.textContent = msg; el.style.display = 'block' }
+}
+
+_auth.onAuthStateChanged(function(user) {
+  if (user) {
+    if (!user.email.endsWith('@bangunasaecos.com')) {
+      _auth.signOut()
+      showLoginErr('Only @bangunasaecos.com accounts are allowed.')
+      return
+    }
+    _fbUser = user
+    document.getElementById('login-screen').style.display = 'none'
+    loadAndSync()
+  } else {
+    _fbUser = null
+    document.getElementById('login-screen').style.display = 'flex'
+    if (_unsubState) { _unsubState(); _unsubState = null }
+    SESSION.personId = null; SESSION.isMaster = false
+    renderHeader()
+  }
+})
+
+function loadAndSync() {
+  if (_unsubState) _unsubState()
+  _unsubState = _db.doc('app/state').onSnapshot(function(snap) {
+    if (!snap.exists) {
+      saveState()
+      renderHeader(); renderPeople()
+      return
+    }
+    const d = snap.data()
+    if (d.people)           PEOPLE           = d.people
+    if (d.projects)         PROJECTS         = d.projects
+    if (d.tasks)            TASKS            = d.tasks
+    if (d.done)             DONE             = d.done
+    if (d.sectionData)      SECTION_DATA     = d.sectionData
+    if (d.pendingApprovals) PENDING_APPROVALS = d.pendingApprovals
+    renderHeader(); renderPeople()
+    if (SESSION.personId) {
+      const p = PEOPLE.find(function(x) { return x.id === SESSION.personId })
+      if (p) renderProjects()
+    }
+  })
+}
+
+function saveState() {
+  if (!_fbUser) return
+  _db.doc('app/state').set({
+    people:           PEOPLE,
+    projects:         PROJECTS,
+    tasks:            TASKS,
+    done:             DONE,
+    sectionData:      SECTION_DATA,
+    pendingApprovals: PENDING_APPROVALS,
+    updatedAt:        firebase.firestore.FieldValue.serverTimestamp()
+  }).catch(function(e) { console.error('saveState error:', e) })
+}
+
+/* ── Init ── */
+renderHeader()
+renderPeople()
+
+/* ── Keyboard support for PIN modal ── */
+document.addEventListener('keydown', function(e) {
+  if (!document.getElementById('pin-modal').classList.contains('open')) return
+  if (e.key >= '0' && e.key <= '9') pinKey(e.key)
+  else if (e.key === 'Backspace') pinBackspace()
+  else if (e.key === 'Escape') closePinModal()
+})
+</script>
+
+<!-- ═══════════════════════════════════════════
+     ROAMING DOGS — Charli (sable corgi) & Chloe (red toy poodle)
+════════════════════════════════════════════ -->
+<style>
+  .rdog { position:fixed; z-index:500; cursor:pointer; user-select:none; }
+  .rdog svg { display:block; filter:drop-shadow(0 2px 5px rgba(0,0,0,.2)); }
+  .rdog.walking svg { animation:dbob .42s ease-in-out infinite; }
+  .rdog.petting svg { animation:dpet .22s ease-in-out infinite; }
+  .rdog .dtail  { transform-box:fill-box; transform-origin:80% 70%; animation:twag .6s ease-in-out infinite alternate; }
+  .rdog.petting .dtail { animation:twagf .15s ease-in-out infinite alternate; }
+  .rdog .dlega  { transform-box:fill-box; transform-origin:50% 0%; animation:lsA .42s ease-in-out infinite alternate; }
+  .rdog .dlegb  { transform-box:fill-box; transform-origin:50% 0%; animation:lsB .42s ease-in-out infinite alternate; }
+  @keyframes dbob  { 0%,100%{transform:translateY(0)}       50%{transform:translateY(-4px)} }
+  @keyframes dpet  { 0%,100%{transform:translateY(0) rotate(-4deg)} 50%{transform:translateY(-7px) rotate(4deg)} }
+  @keyframes twag  { from{transform:rotate(-20deg)} to{transform:rotate(22deg)}  }
+  @keyframes twagf { from{transform:rotate(-45deg)} to{transform:rotate(45deg)}  }
+  @keyframes lsA   { from{transform:rotate(-16deg)} to{transform:rotate(16deg)}  }
+  @keyframes lsB   { from{transform:rotate(16deg)}  to{transform:rotate(-16deg)} }
+  .dog-pop { position:absolute; pointer-events:none; font-size:16px; bottom:100%; animation:hpop 1.1s ease-out forwards; }
+  @keyframes hpop  { 0%{opacity:1;transform:translateY(0) scale(.5)} 55%{opacity:1;transform:translateY(-30px) scale(1.2)} 100%{opacity:0;transform:translateY(-58px) scale(.7)} }
+  .dog-pop   { position:absolute; pointer-events:none; font-size:12px; bottom:100%; animation:hpop 1.1s ease-out forwards; }
+  .dog-badge { position:absolute; bottom:calc(100% + 4px); left:50%; transform:translateX(-50%); background:#fff; border:1.5px solid #e5e7eb; border-radius:20px; padding:3px 9px; font-size:9px; font-weight:700; font-family:'DM Sans',sans-serif; white-space:nowrap; pointer-events:none; opacity:0; transition:opacity .22s; box-shadow:0 2px 8px rgba(0,0,0,.13); }
+  .rdog.petting .dog-badge { opacity:1; }
+  @keyframes dogPuffOut { 0%{opacity:1;transform:scale(1);filter:blur(0px)} 40%{opacity:.8;transform:scale(1.6);filter:blur(2px)} 100%{opacity:0;transform:scale(.15);filter:blur(8px)} }
+  @keyframes dogPuffIn  { 0%{opacity:0;transform:scale(.1);filter:blur(10px)} 55%{opacity:1;transform:scale(1.28);filter:blur(0px)} 78%{transform:scale(.93)} 100%{opacity:1;transform:scale(1);filter:blur(0px)} }
+  .rdog.puff-out { animation:dogPuffOut .42s ease-in forwards !important; pointer-events:none }
+  .rdog.puff-in  { animation:dogPuffIn  .55s cubic-bezier(.34,1.56,.64,1) forwards !important }
+</style>
+
+<!-- CHARLI — sable corgi -->
+<div class="rdog walking" id="rdog-charli" onclick="petDog('charli')" title="Charli!">
+  <div class="dog-badge">Charli 🐾</div>
+  <svg viewBox="0 0 80 60" width="34" height="26" xmlns="http://www.w3.org/2000/svg">
+    <ellipse class="dtail" cx="9" cy="28" rx="9" ry="5" fill="#C8821C" transform="rotate(-38 9 28)"/>
+    <ellipse cx="37" cy="39" rx="23" ry="13" fill="#C8821C"/>
+    <ellipse cx="37" cy="34" rx="18" ry="8" fill="#5C3510" opacity="0.7"/>
+    <ellipse cx="37" cy="44" rx="14" ry="7" fill="#EED49A"/>
+    <rect class="dlegb" x="16" y="47" width="7" height="11" rx="3.5" fill="#C8821C"/>
+    <rect class="dlega" x="25" y="47" width="7" height="11" rx="3.5" fill="#C8821C"/>
+    <rect class="dlega" x="37" y="47" width="7" height="11" rx="3.5" fill="#C8821C"/>
+    <rect class="dlegb" x="46" y="47" width="7" height="11" rx="3.5" fill="#C8821C"/>
+    <ellipse cx="53" cy="35" rx="10" ry="9" fill="#C8821C"/>
+    <circle cx="59" cy="21" r="16" fill="#DCA040"/>
+    <ellipse cx="59" cy="14" rx="13" ry="9" fill="#5C3510" opacity="0.65"/>
+    <circle cx="61" cy="25" r="10" fill="#EED49A"/>
+    <ellipse cx="47" cy="10" rx="7" ry="10" fill="#4A2C0C" transform="rotate(-14 47 10)"/>
+    <ellipse cx="69" cy="10" rx="7" ry="10" fill="#4A2C0C" transform="rotate(14 69 10)"/>
+    <circle cx="63" cy="18" r="3.5" fill="#1a0800"/>
+    <circle cx="64.2" cy="16.8" r="1.1" fill="white"/>
+    <ellipse cx="69" cy="24" rx="3.2" ry="2.2" fill="#1a0800"/>
+    <path d="M67 26 Q69 29.5 71 26" stroke="#1a0800" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+    <ellipse cx="68" cy="25" rx="3.5" ry="2" fill="#ff8888" opacity="0.28"/>
+  </svg>
+</div>
+
+<!-- CHLOE — red toy poodle -->
+<div class="rdog walking" id="rdog-chloe" onclick="petDog('chloe')" title="Chloe!">
+  <div class="dog-badge">Chloe 💕</div>
+  <svg viewBox="0 0 80 66" width="27" height="22" xmlns="http://www.w3.org/2000/svg">
+    <path class="dtail" d="M17 34 Q8 22 14 12" stroke="#C84030" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <circle class="dtail" cx="13" cy="11" r="8" fill="#D45038"/>
+    <circle cx="37" cy="37" r="14" fill="#D45038"/>
+    <circle cx="27" cy="34" r="10" fill="#D45038"/>
+    <circle cx="47" cy="34" r="10" fill="#D45038"/>
+    <circle cx="37" cy="27" r="9" fill="#D45038"/>
+    <rect class="dlegb" x="22" y="47" width="6" height="11" rx="3" fill="#8B1E10"/>
+    <rect class="dlega" x="31" y="48" width="6" height="11" rx="3" fill="#8B1E10"/>
+    <rect class="dlega" x="42" y="48" width="6" height="11" rx="3" fill="#8B1E10"/>
+    <rect class="dlegb" x="51" y="47" width="6" height="11" rx="3" fill="#8B1E10"/>
+    <circle cx="25" cy="60" r="6" fill="#D45038"/>
+    <circle cx="34" cy="61" r="6" fill="#D45038"/>
+    <circle cx="46" cy="61" r="6" fill="#D45038"/>
+    <circle cx="55" cy="60" r="6" fill="#D45038"/>
+    <circle cx="62" cy="21" r="16" fill="#D45038"/>
+    <circle cx="53" cy="9"  r="9"  fill="#D45038"/>
+    <circle cx="63" cy="7"  r="9"  fill="#D45038"/>
+    <ellipse cx="62" cy="8" rx="9" ry="7" fill="#C84030"/>
+    <circle cx="65" cy="18" r="3.5" fill="#1a0800"/>
+    <circle cx="66.2" cy="16.8" r="1.1" fill="white"/>
+    <ellipse cx="70" cy="24" rx="3.2" ry="2.2" fill="#1a0800"/>
+    <path d="M68 26.5 Q70 30 72 26.5" stroke="#1a0800" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+    <ellipse cx="69" cy="25" rx="3.5" ry="2" fill="#ff99cc" opacity="0.32"/>
+  </svg>
+</div>
+
+<script>
+(function () {
+  var POP_C = ['🐾','💛','⭐','🦴','💫','🐕']
+  var POP_P = ['💕','🌸','✨','❤️','🌷','🐩']
+
+  var DW = 38, DH = 30, EDGE = 6
+
+  function perimPos(t) {
+    var W = window.innerWidth, H = window.innerHeight
+    var sT = W - 2*EDGE - DW
+    var sR = H - 2*EDGE - DH
+    var total = 2 * (sT + sR)
+    t = ((t % total) + total) % total
+    if (t < sT) return { x: EDGE + t,            y: EDGE,              edge: 'top'    }
+    t -= sT
+    if (t < sR) return { x: W - EDGE - DW,       y: EDGE + t,          edge: 'right'  }
+    t -= sR
+    if (t < sT) return { x: W - EDGE - DW - t,   y: H - EDGE - DH,     edge: 'bottom' }
+    t -= sT
+    return             { x: EDGE,                 y: H - EDGE - DH - t, edge: 'left'   }
+  }
+
+  function rndSpd() { return 0.3 + Math.random() * 0.6 }  // 0.3–0.9 px/frame
+
+  var DOGS = {
+    charli: { t: 0, walkDir:  1, spd: 0.55, spdTarget: 0.55, face:  1, petting: false, _pt: null, _ticks: 0, _changeAt: 700 },
+    chloe:  { t: 0, walkDir: -1, spd: 0.45, spdTarget: 0.45, face: -1, petting: false, _pt: null, _ticks: 0, _changeAt: 950 }
+  }
+  // Place both dogs on the bottom edge at startup
+  ;(function() {
+    var W = window.innerWidth, H = window.innerHeight
+    var sT = W - 2*EDGE - DW
+    var sR = H - 2*EDGE - DH
+    var bottomStart = sT + sR
+    DOGS.charli.t = bottomStart + sT * 0.25
+    DOGS.chloe.t  = bottomStart + sT * 0.65
+  })()
+
+  var DOGS_VISIBLE = true
+
+  window.showDogs = function() {
+    if (DOGS_VISIBLE) return
+    DOGS_VISIBLE = true
+    ;['charli','chloe'].forEach(function(id) {
+      var el = document.getElementById('rdog-' + id)
+      if (!el) return
+      el.style.display = ''
+      el.classList.remove('puff-out')
+      void el.offsetWidth
+      el.classList.add('puff-in')
+      setTimeout(function(){ el.classList.remove('puff-in') }, 600)
+    })
+  }
+
+  window.hideDogs = function() {
+    if (!DOGS_VISIBLE) return
+    DOGS_VISIBLE = false
+    ;['charli','chloe'].forEach(function(id) {
+      var el = document.getElementById('rdog-' + id)
+      if (!el) return
+      el.classList.remove('puff-in')
+      el.classList.add('puff-out')
+      setTimeout(function(){ el.style.display = 'none'; el.classList.remove('puff-out') }, 450)
+    })
+  }
+
+  function spawnPops(id) {
+    var el = document.getElementById('rdog-' + id)
+    if (!el) return
+    var pool = id === 'charli' ? POP_C : POP_P
+    for (var i = 0; i < 5; i++) {
+      (function(delay) {
+        setTimeout(function() {
+          var p = document.createElement('div')
+          p.className = 'dog-pop'
+          p.textContent = pool[Math.floor(Math.random() * pool.length)]
+          p.style.left = (4 + Math.random() * 24) + 'px'
+          el.appendChild(p)
+          setTimeout(function(){ p.remove() }, 1200)
+        }, delay)
+      })(i * 190)
+    }
+  }
+
+  var PLAY = { active: false, cooldown: 0, _pt: null }
+  var PLAY_POOL = ['❤️','🐾','✨','💕','🎾','⭐','🥳','💝']
+
+  function spawnPlayPops() {
+    ;['charli','chloe'].forEach(function(id) {
+      var el = document.getElementById('rdog-' + id)
+      if (!el) return
+      for (var i = 0; i < 4; i++) {
+        (function(delay) {
+          setTimeout(function() {
+            var p = document.createElement('div')
+            p.className = 'dog-pop'
+            p.textContent = PLAY_POOL[Math.floor(Math.random() * PLAY_POOL.length)]
+            p.style.left = (2 + Math.random() * 26) + 'px'
+            el.appendChild(p)
+            setTimeout(function(){ p.remove() }, 1200)
+          }, delay)
+        })(i * 320)
+      }
+    })
+  }
+
+  function triggerPlay() {
+    if (PLAY.active || PLAY.cooldown > 0) return
+    if (DOGS.charli.petting || DOGS.chloe.petting) return
+    PLAY.active = true
+    var cPos = perimPos(DOGS.charli.t)
+    var hPos = perimPos(DOGS.chloe.t)
+    DOGS.charli.face = cPos.x <= hPos.x ?  1 : -1
+    DOGS.chloe.face  = hPos.x <  cPos.x ?  1 : -1
+    ;['charli','chloe'].forEach(function(id) {
+      var el = document.getElementById('rdog-' + id)
+      if (!el) return
+      el.classList.add('playing'); el.classList.remove('walking')
+      el.style.transform = DOGS[id].face === -1 ? 'scaleX(-1)' : ''
+    })
+    spawnPlayPops()
+    clearTimeout(PLAY._pt)
+    PLAY._pt = setTimeout(function() {
+      PLAY.active = false
+      PLAY.cooldown = 900
+      ;['charli','chloe'].forEach(function(id) {
+        var el = document.getElementById('rdog-' + id)
+        if (el) { el.classList.remove('playing'); el.classList.add('walking') }
+      })
+    }, 2800)
+  }
+
+  window.petDog = function(id) {
+    var s = DOGS[id], el = document.getElementById('rdog-' + id)
+    if (!el || s.petting) return
+    s.petting = true
+    el.classList.add('petting'); el.classList.remove('walking')
+    spawnPops(id)
+    clearTimeout(s._pt)
+    s._pt = setTimeout(function() {
+      s.petting = false
+      el.classList.remove('petting'); el.classList.add('walking')
+    }, 2400)
+  }
+
+  function tick() {
+    // Proximity check — trigger play when the two dogs get close
+    if (!PLAY.active && !DOGS.charli.petting && !DOGS.chloe.petting) {
+      if (PLAY.cooldown > 0) {
+        PLAY.cooldown--
+      } else {
+        var cP = perimPos(DOGS.charli.t), hP = perimPos(DOGS.chloe.t)
+        var ddx = cP.x - hP.x, ddy = cP.y - hP.y
+        if (Math.sqrt(ddx*ddx + ddy*ddy) < 62) triggerPlay()
+      }
+    }
+
+    for (var id in DOGS) {
+      var s = DOGS[id]
+      if (!s.petting && !PLAY.active) {
+        var prevPos = perimPos(s.t)
+        s.t += s.spd * s.walkDir
+        s._ticks++
+
+        if (s._ticks >= s._changeAt) {
+          s._ticks = 0
+          s._changeAt = 600 + Math.floor(Math.random() * 700)
+          if (Math.random() < 0.3) {
+            s.walkDir *= -1
+            s.spdTarget = rndSpd() * 0.5
+            var _s = s
+            setTimeout(function() { _s.spdTarget = rndSpd() }, 500 + Math.random() * 300)
+          } else {
+            s.spdTarget = rndSpd()
+          }
+        }
+
+        s.spd += (s.spdTarget - s.spd) * 0.025
+
+        var curPos = perimPos(s.t)
+        if      (curPos.edge === 'right') s.face = -1
+        else if (curPos.edge === 'left')  s.face =  1
+        else { var dx = curPos.x - prevPos.x; if (Math.abs(dx) > 0.05) s.face = dx > 0 ? 1 : -1 }
+      }
+
+      if (!DOGS_VISIBLE || s.petting || PLAY.active) continue
+      var pos = perimPos(s.t)
+      var el = document.getElementById('rdog-' + id)
+      if (el) {
+        el.style.left = pos.x + 'px'
+        el.style.top  = pos.y + 'px'
+        el.style.transform = s.face === -1 ? 'scaleX(-1)' : ''
+      }
+    }
+    requestAnimationFrame(tick)
+  }
+
+  requestAnimationFrame(tick)
+})()
+</script>
+</body>
+</html>
