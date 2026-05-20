@@ -3389,6 +3389,12 @@ function loadAndSync() {
 function checkUserApproval() {
   if (!_fbUser) return
   const email = _fbUser.email
+  // Principal email always bypasses approval
+  if (email === 'bangunasa@bangunasaecos.com') {
+    document.getElementById('waiting-screen').style.display = 'none'
+    renderHeader(); renderPeople()
+    return
+  }
   const approved = PEOPLE.find(function(p) { return p.email === email })
   if (approved) {
     document.getElementById('waiting-screen').style.display = 'none'
