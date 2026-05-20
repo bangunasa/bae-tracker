@@ -505,14 +505,19 @@
     .pin-change-btn  { padding:5px 14px; border-radius:20px; font-size:.72rem; font-weight:600; cursor:pointer; transition:all .2s; background:none; border:1.5px solid var(--border); color:var(--muted); font-family:'DM Sans',sans-serif; }
     .pin-change-btn:hover { border-color:var(--text); color:var(--text); }
 
-    /* ── PENDING APPROVALS ── */
-    .pending-section-label { font-size:.65rem; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--blue); margin:20px 0 8px; display:flex; align-items:center; gap:8px; }
-    .pending-section-label::after { content:''; flex:1; height:1px; background:var(--blue-br); }
-    .pending-card { background:var(--blue-bg); border:1px solid var(--blue-br); border-radius:12px; padding:14px 16px; margin-bottom:8px; }
-    .pending-card-name  { font-size:.95rem; font-weight:700; margin-bottom:2px; }
-    .pending-card-email { font-size:.72rem; color:var(--muted); margin-bottom:10px; }
-    .pending-card-btns  { display:flex; gap:8px; }
-    .pending-card-date  { font-size:.65rem; color:var(--muted); margin-bottom:8px; }
+    /* ── MESSAGES / APPROVALS ── */
+    .messages-section { margin-top:28px; }
+    .messages-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+    .messages-title { font-size:.65rem; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); display:flex; align-items:center; gap:6px; }
+    .messages-badge { background:var(--blue); color:#fff; font-size:.6rem; font-weight:700; border-radius:10px; padding:1px 7px; }
+    .msg-card { background:var(--white); border:1px solid var(--border); border-radius:12px; padding:14px 16px; margin-bottom:8px; display:flex; align-items:center; gap:14px; }
+    .msg-avatar { width:38px; height:38px; border-radius:50%; background:var(--faint); display:flex; align-items:center; justify-content:center; font-size:.8rem; font-weight:700; color:var(--muted); flex-shrink:0; }
+    .msg-body { flex:1; min-width:0; }
+    .msg-name  { font-size:.88rem; font-weight:700; margin-bottom:2px; }
+    .msg-email { font-size:.7rem; color:var(--muted); margin-bottom:6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .msg-date  { font-size:.62rem; color:var(--muted); }
+    .msg-actions { display:flex; gap:6px; flex-shrink:0; }
+    .msg-empty { text-align:center; padding:28px 0; color:var(--muted); font-size:.82rem; }
 
     /* ── LOGIN ── */
     #login-screen { position:fixed; inset:0; z-index:9998; background:var(--bg); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:32px 24px; }
@@ -984,7 +989,8 @@ function goBack() {
 
 function navPeople() {
   currentView = 'people'; activePerson = null; activeProject = null; activeSection = null
-  SESSION.personId = null; SESSION.isMaster = false
+  SESSION.personId = null
+  SESSION.isMaster = isPrincipal()
   document.getElementById('back-btn').classList.remove('show')
   show('view-people'); hide('view-projects'); hide('view-sections'); hide('view-items'); hide('view-trash'); hide('view-master')
   if (window.showDogs) window.showDogs()
@@ -1294,21 +1300,33 @@ function rejectMember(paId) {
 function renderPendingApprovals() {
   const el = document.getElementById('pending-approvals-section')
   if (!el) return
-  if (!SESSION.isMaster || PENDING_APPROVALS.length === 0) { el.innerHTML = ''; return }
+  if (!SESSION.isMaster) { el.innerHTML = ''; return }
+  const badge = PENDING_APPROVALS.length ? `<span class="messages-badge">${PENDING_APPROVALS.length}</span>` : ''
+  const cards = PENDING_APPROVALS.length
+    ? PENDING_APPROVALS.map(pa => {
+        const initials = pa.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0,2)
+        return `
+          <div class="msg-card">
+            <div class="msg-avatar">${initials}</div>
+            <div class="msg-body">
+              <div class="msg-name">${pa.name}</div>
+              <div class="msg-email">${pa.email}</div>
+              <div class="msg-date">Requested ${pa.requestedAt}</div>
+            </div>
+            <div class="msg-actions">
+              <button class="accept-btn" onclick="approveMember('${pa.id}')">Approve</button>
+              <button class="decline-btn" onclick="rejectMember('${pa.id}')">Reject</button>
+            </div>
+          </div>`
+      }).join('')
+    : `<div class="msg-empty">No pending requests</div>`
   el.innerHTML = `
-    <div class="pending-section-label">⏳ Pending Approvals (${PENDING_APPROVALS.length})</div>
-    ${PENDING_APPROVALS.map(pa => `
-      <div class="pending-card">
-        <div class="pending-card-name">${pa.name}</div>
-        <div class="pending-card-email">${pa.email}</div>
-        <div class="pending-card-date">Requested: ${pa.requestedAt}</div>
-        <div class="pending-card-btns">
-          <button class="accept-btn" onclick="approveMember('${pa.id}')">Approve</button>
-          <button class="decline-btn" onclick="rejectMember('${pa.id}')">Reject</button>
-        </div>
+    <div class="messages-section">
+      <div class="messages-header">
+        <div class="messages-title">📬 Messages ${badge}</div>
       </div>
-    `).join('')}
-  `
+      ${cards}
+    </div>`
 }
 
 /* ════════════════════════════════════════════
@@ -1366,7 +1384,10 @@ function renderPeople() {
       </div>`
   }).join('')
   const ob = document.getElementById('overview-btn')
-  if (ob) ob.textContent = SESSION.isMaster ? '📊 Overview' : '🔒 Overview'
+  if (ob) {
+    ob.textContent = SESSION.isMaster ? '📊 Overview' : '🔒 Overview'
+    ob.style.display = SESSION.isMaster ? 'block' : 'none'
+  }
   renderPendingApprovals()
 }
 
@@ -3386,11 +3407,16 @@ function loadAndSync() {
   })
 }
 
+function isPrincipal() {
+  return _fbUser && _fbUser.email === 'bangunasa@bangunasaecos.com'
+}
+
 function checkUserApproval() {
   if (!_fbUser) return
   const email = _fbUser.email
-  // Principal email always bypasses approval
-  if (email === 'bangunasa@bangunasaecos.com') {
+  // Principal email is always master — no approval needed
+  if (isPrincipal()) {
+    SESSION.isMaster = true
     document.getElementById('waiting-screen').style.display = 'none'
     renderHeader(); renderPeople()
     return
