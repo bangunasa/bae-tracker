@@ -534,13 +534,22 @@
   <div class="login-tagline">Design Tracker</div>
   <div class="login-card">
     <div class="login-card-title">Team Access</div>
-    <div class="login-card-desc">Sign in with your @bangunasaecos.com Google account to continue.</div>
+    <div class="login-card-desc">Sign in with your Google account to request access.</div>
     <button class="btn-google" onclick="doSignIn()">
       <svg viewBox="0 0 48 48" width="18" height="18"><path fill="#4285F4" d="M44.5 20H24v8.5h11.8C34.7 33.9 29.8 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 4.1 29.6 2 24 2 11.8 2 2 11.8 2 24s9.8 22 22 22c11 0 21-8 21-21 0-1.3-.2-2.7-.5-4z"/></svg>
       Sign in with Google
     </button>
     <div class="login-err" id="login-err"></div>
   </div>
+</div>
+
+<!-- WAITING FOR APPROVAL -->
+<div id="waiting-screen" style="display:none;position:fixed;inset:0;z-index:9999;background:var(--bg);flex-direction:column;align-items:center;justify-content:center;padding:32px 20px">
+  <div style="font-size:2rem;margin-bottom:12px">⏳</div>
+  <div style="font-size:1.1rem;font-weight:700;margin-bottom:6px">Waiting for Approval</div>
+  <div style="font-size:.85rem;color:var(--muted);text-align:center;max-width:280px;margin-bottom:24px">Your access request has been sent to the principal. You'll be notified once approved.</div>
+  <div id="waiting-email" style="font-size:.75rem;color:var(--muted);margin-bottom:32px"></div>
+  <button onclick="doSignOut()" style="background:none;border:1px solid var(--border);border-radius:20px;padding:8px 20px;font-size:.78rem;color:var(--muted);cursor:pointer;font-family:'DM Sans',sans-serif">Sign Out</button>
 </div>
 
 <div id="header">
@@ -565,7 +574,6 @@
       <button id="overview-btn" onclick="navMaster()" style="background:none;border:1.5px solid var(--border);border-radius:9px;padding:5px 12px;font-size:.72rem;color:var(--muted);cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600">🔒 Overview</button>
     </div>
     <div class="view-sub">Select a team member to sign in</div>
-    <button class="add-btn" onclick="openJoinModal()">+ Request to Join</button>
     <div class="people-grid" id="people-grid"></div>
     <div id="pending-approvals-section"></div>
   </div>
@@ -1353,8 +1361,7 @@ function renderPeople() {
             ${chips || '<span class="person-chip">No projects</span>'}
           </div>
         </div>
-        <button class="person-remove" title="Remove member"
-          onclick="event.stopPropagation();openRemoveModal('${person.id}')">✕</button>
+        ${SESSION.isMaster ? `<button class="person-remove" title="Remove member" onclick="event.stopPropagation();openRemoveModal('${person.id}')">✕</button>` : ''}
         <span class="chevron">›</span>
       </div>`
   }).join('')
@@ -3333,7 +3340,6 @@ firebase.initializeApp({
 const _auth = firebase.auth()
 const _db   = firebase.firestore()
 const _googleProvider = new firebase.auth.GoogleAuthProvider()
-_googleProvider.setCustomParameters({ hd: 'bangunasaecos.com' })
 
 let _fbUser = null
 let _unsubState = null
@@ -3348,17 +3354,13 @@ function showLoginErr(msg) {
 
 _auth.onAuthStateChanged(function(user) {
   if (user) {
-    if (!user.email.endsWith('@bangunasaecos.com')) {
-      _auth.signOut()
-      showLoginErr('Only @bangunasaecos.com accounts are allowed.')
-      return
-    }
     _fbUser = user
     document.getElementById('login-screen').style.display = 'none'
     loadAndSync()
   } else {
     _fbUser = null
     document.getElementById('login-screen').style.display = 'flex'
+    document.getElementById('waiting-screen').style.display = 'none'
     if (_unsubState) { _unsubState(); _unsubState = null }
     SESSION.personId = null; SESSION.isMaster = false
     renderHeader()
@@ -3370,7 +3372,7 @@ function loadAndSync() {
   _unsubState = _db.doc('app/state').onSnapshot(function(snap) {
     if (!snap.exists) {
       saveState()
-      renderHeader(); renderPeople()
+      checkUserApproval()
       return
     }
     const d = snap.data()
@@ -3380,12 +3382,36 @@ function loadAndSync() {
     if (d.done)             DONE             = d.done
     if (d.sectionData)      SECTION_DATA     = d.sectionData
     if (d.pendingApprovals) PENDING_APPROVALS = d.pendingApprovals
+    checkUserApproval()
+  })
+}
+
+function checkUserApproval() {
+  if (!_fbUser) return
+  const email = _fbUser.email
+  const approved = PEOPLE.find(function(p) { return p.email === email })
+  if (approved) {
+    document.getElementById('waiting-screen').style.display = 'none'
     renderHeader(); renderPeople()
     if (SESSION.personId) {
       const p = PEOPLE.find(function(x) { return x.id === SESSION.personId })
       if (p) renderProjects()
     }
-  })
+    return
+  }
+  const already = PENDING_APPROVALS.find(function(p) { return p.email === email })
+  if (!already) {
+    const name = _fbUser.displayName || email.split('@')[0]
+    PENDING_APPROVALS.push({
+      id: 'pa_' + Date.now(), name, email,
+      requestedAt: new Date().toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' })
+    })
+    saveState()
+  }
+  const ws = document.getElementById('waiting-screen')
+  ws.style.display = 'flex'
+  const we = document.getElementById('waiting-email')
+  if (we) we.textContent = email
 }
 
 function saveState() {
