@@ -505,8 +505,27 @@
     .pin-change-btn  { padding:5px 14px; border-radius:20px; font-size:.72rem; font-weight:600; cursor:pointer; transition:all .2s; background:none; border:1.5px solid var(--border); color:var(--muted); font-family:'DM Sans',sans-serif; }
     .pin-change-btn:hover { border-color:var(--text); color:var(--text); }
 
+    /* ── SPECTATOR MODE (master viewing member workspace) ── */
+    main.spectator .add-btn,
+    main.spectator .avail-toggle-row,
+    main.spectator .pin-change-row,
+    main.spectator .release-row,
+    main.spectator .proj-act-btn,
+    main.spectator .sec-act-btn,
+    main.spectator #add-task-btn,
+    main.spectator #trash-clear-btn,
+    main.spectator .worker-picker,
+    main.spectator .worker-pill,
+    main.spectator .section-owner-banner .accept-btn,
+    main.spectator .section-owner-banner .decline-btn,
+    main.spectator .incoming-card .accept-btn,
+    main.spectator .incoming-card .decline-btn
+    { display: none !important; }
+    main.spectator .checkbox { pointer-events: none !important; opacity: .55; }
+    .spectator-banner { background:rgba(17,17,17,.06); border-radius:10px; padding:8px 14px; font-size:.72rem; color:var(--muted); text-align:center; margin-bottom:14px; }
+
     /* ── MESSAGES / APPROVALS ── */
-    .messages-section { margin-top:28px; }
+    .messages-section { margin-top:0; margin-bottom:20px; }
     .messages-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
     .messages-title { font-size:.65rem; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); display:flex; align-items:center; gap:6px; }
     .messages-badge { background:var(--blue); color:#fff; font-size:.6rem; font-weight:700; border-radius:10px; padding:1px 7px; }
@@ -579,12 +598,13 @@
       <button id="overview-btn" onclick="navMaster()" style="background:none;border:1.5px solid var(--border);border-radius:9px;padding:5px 12px;font-size:.72rem;color:var(--muted);cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600">🔒 Overview</button>
     </div>
     <div class="view-sub">Select a team member to sign in</div>
-    <div class="people-grid" id="people-grid"></div>
     <div id="pending-approvals-section"></div>
+    <div class="people-grid" id="people-grid"></div>
   </div>
 
   <!-- PROJECTS -->
   <div id="view-projects" style="display:none">
+    <div id="spectator-banner" style="display:none" class="spectator-banner">👁 Spectator mode — view only</div>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px">
       <div class="view-title" id="projects-title">Projects</div>
       <button id="trash-nav-btn" onclick="navTrash()" style="background:none;border:1.5px solid var(--border);border-radius:9px;padding:5px 11px;font-size:.72rem;color:var(--muted);cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:5px">🗑 Trash <span id="trash-badge" style="display:none;background:var(--red);color:#fff;font-size:.6rem;font-weight:700;border-radius:10px;padding:1px 6px;margin-left:2px"></span></button>
@@ -991,6 +1011,7 @@ function navPeople() {
   currentView = 'people'; activePerson = null; activeProject = null; activeSection = null
   SESSION.personId = null
   SESSION.isMaster = isPrincipal()
+  document.querySelector('main').classList.remove('spectator')
   document.getElementById('back-btn').classList.remove('show')
   show('view-people'); hide('view-projects'); hide('view-sections'); hide('view-items'); hide('view-trash'); hide('view-master')
   if (window.showDogs) window.showDogs()
@@ -1020,6 +1041,11 @@ function navTrash() {
 }
 
 function navProjects(personId) {
+  if (SESSION.isMaster) {
+    document.querySelector('main').classList.add('spectator')
+    _doNavProjects(personId)
+    return
+  }
   if (SESSION.personId !== personId) {
     openPinModal(personId)
     return
@@ -1031,6 +1057,8 @@ function _doNavProjects(personId) {
   currentView   = 'projects'; activeProject = null; activeSection = null
   document.getElementById('back-btn').classList.add('show')
   document.getElementById('projects-title').textContent = activePerson.name
+  const sb = document.getElementById('spectator-banner')
+  if (sb) sb.style.display = SESSION.isMaster ? 'block' : 'none'
   if (window.hideDogs) window.hideDogs()
   hide('view-people'); show('view-projects'); hide('view-sections'); hide('view-items'); hide('view-trash'); hide('view-master')
   renderAvailToggle()
@@ -1365,7 +1393,7 @@ function renderPeople() {
     const availChip = `<span class="avail-chip ${person.status}"><span class="avail-dot"></span>${person.status === 'available' ? 'Available' : 'Full'}</span>`
 
     return `
-      <div class="person-card${hasCrown ? ' champ' : hasEncourage ? ' encourage' : ''}" ${SESSION.isMaster ? 'style="position:relative;cursor:default"' : `onclick="navProjects('${person.id}')" style="position:relative"`}>
+      <div class="person-card${hasCrown ? ' champ' : hasEncourage ? ' encourage' : ''}" onclick="navProjects('${person.id}')" style="position:relative">
         ${hasCrown    ? `<div class="champ-ribbon">🏆 #1 RANKED</div>` : ''}
         ${hasEncourage? `<div class="encourage-ribbon">⚡ KEEP GOING!</div>` : ''}
         <div style="position:relative;flex-shrink:0;overflow:visible">
@@ -3362,6 +3390,7 @@ firebase.initializeApp({
 const _auth = firebase.auth()
 const _db   = firebase.firestore()
 const _googleProvider = new firebase.auth.GoogleAuthProvider()
+_googleProvider.setCustomParameters({ prompt: 'select_account' })
 
 let _fbUser = null
 let _unsubState = null
