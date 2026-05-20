@@ -1141,7 +1141,9 @@ function renderHeader() {
       <button class="btn-signout" onclick="signOut()">Sign Out</button>
     `
   } else {
-    el.innerHTML = ''
+    el.innerHTML = _fbUser
+      ? `<button class="btn-signout" onclick="doSignOut()">Sign Out</button>`
+      : ''
   }
 }
 
