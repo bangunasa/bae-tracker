@@ -3703,6 +3703,12 @@ document.addEventListener('keydown', function(e) {
     DOGS.chloe.t  = bottomStart + sT * 0.65
   })()
 
+  function setDogFace(el, face) {
+    el.style.transform = face === -1 ? 'scaleX(-1)' : ''
+    var badge = el.querySelector('.dog-badge')
+    if (badge) badge.style.transform = face === -1 ? 'translateX(-50%) scaleX(-1)' : 'translateX(-50%)'
+  }
+
   var DOGS_VISIBLE = true
 
   window.showDogs = function() {
@@ -3735,6 +3741,7 @@ document.addEventListener('keydown', function(e) {
     var el = document.getElementById('rdog-' + id)
     if (!el) return
     var pool = id === 'charli' ? POP_C : POP_P
+    var face = DOGS[id].face
     for (var i = 0; i < 5; i++) {
       (function(delay) {
         setTimeout(function() {
@@ -3742,6 +3749,7 @@ document.addEventListener('keydown', function(e) {
           p.className = 'dog-pop'
           p.textContent = pool[Math.floor(Math.random() * pool.length)]
           p.style.left = (4 + Math.random() * 24) + 'px'
+          if (face === -1) p.style.transform = 'scaleX(-1)'
           el.appendChild(p)
           setTimeout(function(){ p.remove() }, 1200)
         }, delay)
@@ -3756,6 +3764,7 @@ document.addEventListener('keydown', function(e) {
     ;['charli','chloe'].forEach(function(id) {
       var el = document.getElementById('rdog-' + id)
       if (!el) return
+      var face = DOGS[id].face
       for (var i = 0; i < 4; i++) {
         (function(delay) {
           setTimeout(function() {
@@ -3763,6 +3772,7 @@ document.addEventListener('keydown', function(e) {
             p.className = 'dog-pop'
             p.textContent = PLAY_POOL[Math.floor(Math.random() * PLAY_POOL.length)]
             p.style.left = (2 + Math.random() * 26) + 'px'
+            if (face === -1) p.style.transform = 'scaleX(-1)'
             el.appendChild(p)
             setTimeout(function(){ p.remove() }, 1200)
           }, delay)
@@ -3783,7 +3793,7 @@ document.addEventListener('keydown', function(e) {
       var el = document.getElementById('rdog-' + id)
       if (!el) return
       el.classList.add('playing'); el.classList.remove('walking')
-      el.style.transform = DOGS[id].face === -1 ? 'scaleX(-1)' : ''
+      setDogFace(el, DOGS[id].face)
     })
     spawnPlayPops()
     clearTimeout(PLAY._pt)
@@ -3856,7 +3866,7 @@ document.addEventListener('keydown', function(e) {
       if (el) {
         el.style.left = pos.x + 'px'
         el.style.top  = pos.y + 'px'
-        el.style.transform = s.face === -1 ? 'scaleX(-1)' : ''
+        setDogFace(el, s.face)
       }
     }
     requestAnimationFrame(tick)
