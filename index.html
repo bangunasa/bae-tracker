@@ -537,6 +537,14 @@
     .msg-date  { font-size:.62rem; color:var(--muted); }
     .msg-actions { display:flex; gap:6px; flex-shrink:0; }
     .msg-empty { text-align:center; padding:28px 0; color:var(--muted); font-size:.82rem; }
+    /* ── FORMER MEMBERS ── */
+    .former-section { margin-top:24px; }
+    .former-title { font-size:.65rem; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); margin-bottom:10px; }
+    .former-row { display:flex; align-items:center; gap:12px; padding:10px 14px; background:var(--white); border:1px solid var(--border); border-radius:10px; margin-bottom:6px; }
+    .former-avatar { width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:.65rem; font-weight:700; color:#fff; flex-shrink:0; opacity:.55; }
+    .former-name  { font-size:.85rem; font-weight:600; color:var(--muted); }
+    .former-email { font-size:.68rem; color:var(--muted); opacity:.7; }
+    .former-date  { margin-left:auto; font-size:.62rem; color:var(--muted); flex-shrink:0; }
 
     /* ── LOGIN ── */
     #login-screen { position:fixed; inset:0; z-index:9998; background:var(--bg); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:32px 24px; }
@@ -600,6 +608,7 @@
     <div class="view-sub">Select a team member to sign in</div>
     <div id="pending-approvals-section"></div>
     <div class="people-grid" id="people-grid"></div>
+    <div id="former-members-section"></div>
   </div>
 
   <!-- PROJECTS -->
@@ -864,6 +873,7 @@ let PEOPLE = []
 
 let SESSION            = { personId: null, isMaster: false }
 let PENDING_APPROVALS  = []
+let FORMER_MEMBERS     = []
 
 const MEMBER_COLORS = [
   '#1a56db', '#E02424', '#16a34a', '#ea580c',
@@ -1359,6 +1369,25 @@ function renderPendingApprovals() {
     </div>`
 }
 
+function renderFormerMembers() {
+  const el = document.getElementById('former-members-section')
+  if (!el) return
+  if (!SESSION.isMaster || FORMER_MEMBERS.length === 0) { el.innerHTML = ''; return }
+  el.innerHTML = `
+    <div class="former-section">
+      <div class="former-title">Former Members (${FORMER_MEMBERS.length})</div>
+      ${[...FORMER_MEMBERS].reverse().map(m => `
+        <div class="former-row">
+          <div class="former-avatar" style="background:${m.color}">${m.initials}</div>
+          <div>
+            <div class="former-name">${m.name}</div>
+            ${m.email ? `<div class="former-email">${m.email}</div>` : ''}
+          </div>
+          <div class="former-date">Left ${m.removedAt}</div>
+        </div>`).join('')}
+    </div>`
+}
+
 /* ════════════════════════════════════════════
    RENDER: PEOPLE
 ════════════════════════════════════════════ */
@@ -1418,6 +1447,7 @@ function renderPeople() {
     ob.style.display = SESSION.isMaster ? 'block' : 'none'
   }
   renderPendingApprovals()
+  renderFormerMembers()
 }
 
 /* ════════════════════════════════════════════
@@ -2435,6 +2465,12 @@ function confirmRemoveMember() {
     ownedProj.forEach(p => { p.owner = target.name })
     toast(`${ownedProj.length} project${ownedProj.length > 1 ? 's' : ''} transferred to ${target.name}`)
   }
+  // archive to former members
+  FORMER_MEMBERS.push({
+    id: person.id, name: person.name, email: person.email || '',
+    initials: person.initials, color: person.color,
+    removedAt: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  })
   // remove from collaborators on any project
   PROJECTS.forEach(p => { p.collaborators = (p.collaborators || []).filter(c => c !== person.name) })
   PEOPLE = PEOPLE.filter(p => p.id !== removingPersonId)
@@ -3433,6 +3469,7 @@ function loadAndSync() {
     if (d.done)             DONE             = d.done
     if (d.sectionData)      SECTION_DATA     = d.sectionData
     if (d.pendingApprovals) PENDING_APPROVALS = d.pendingApprovals
+    if (d.formerMembers)   FORMER_MEMBERS    = d.formerMembers
     checkUserApproval()
   })
 }
@@ -3485,6 +3522,7 @@ function saveState() {
     done:             DONE,
     sectionData:      SECTION_DATA,
     pendingApprovals: PENDING_APPROVALS,
+    formerMembers:    FORMER_MEMBERS,
     updatedAt:        firebase.firestore.FieldValue.serverTimestamp()
   }).catch(function(e) { console.error('saveState error:', e) })
 }
