@@ -1089,8 +1089,10 @@ function renderHeader() {
   const el = document.getElementById('header-right')
   if (SESSION.isMaster) {
     el.innerHTML = `
-      <div class="user-avatar" style="background:#111;font-size:.6rem;letter-spacing:.02em">MASTER</div>
-      <button class="btn-signout" onclick="signOut()">Sign Out</button>
+      <div style="display:flex;align-items:center;gap:6px;background:#111;color:#fff;border-radius:20px;padding:5px 13px 5px 9px;font-size:.72rem;font-weight:700;letter-spacing:.03em">
+        <span style="font-size:.95rem;line-height:1">👑</span> Master
+      </div>
+      <button class="btn-signout" onclick="doSignOut()">Sign Out</button>
     `
   } else if (SESSION.personId) {
     const person = PEOPLE.find(p => p.id === SESSION.personId)
@@ -1363,7 +1365,7 @@ function renderPeople() {
     const availChip = `<span class="avail-chip ${person.status}"><span class="avail-dot"></span>${person.status === 'available' ? 'Available' : 'Full'}</span>`
 
     return `
-      <div class="person-card${hasCrown ? ' champ' : hasEncourage ? ' encourage' : ''}" onclick="navProjects('${person.id}')" style="position:relative">
+      <div class="person-card${hasCrown ? ' champ' : hasEncourage ? ' encourage' : ''}" ${SESSION.isMaster ? 'style="position:relative;cursor:default"' : `onclick="navProjects('${person.id}')" style="position:relative"`}>
         ${hasCrown    ? `<div class="champ-ribbon">🏆 #1 RANKED</div>` : ''}
         ${hasEncourage? `<div class="encourage-ribbon">⚡ KEEP GOING!</div>` : ''}
         <div style="position:relative;flex-shrink:0;overflow:visible">
@@ -1379,8 +1381,7 @@ function renderPeople() {
             ${chips || '<span class="person-chip">No projects</span>'}
           </div>
         </div>
-        ${SESSION.isMaster ? `<button class="person-remove" title="Remove member" onclick="event.stopPropagation();openRemoveModal('${person.id}')">✕</button>` : ''}
-        <span class="chevron">›</span>
+        ${SESSION.isMaster ? `<button class="person-remove" title="Remove member" onclick="event.stopPropagation();openRemoveModal('${person.id}')">✕</button>` : '<span class="chevron">›</span>'}
       </div>`
   }).join('')
   const ob = document.getElementById('overview-btn')
