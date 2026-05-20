@@ -547,7 +547,6 @@
   <div class="header-left">
     <button id="back-btn" onclick="goBack()">← Back</button>
     <div class="header-brand-wrap">
-      <img src="../04 - Aset & Logo/BAE LOGO BLACK.png" class="header-logo" alt="BAE">
       <div class="header-brand-text">
         <span class="header-brand">Tracker</span>
         <span class="header-sub">for Design</span>
@@ -827,10 +826,7 @@ const SECTIONS = [
   { id: 'structure', name: '06 — STRUCTURE',  order: 5 },
 ]
 
-let PEOPLE = [
-  { id: 'andreas', name: 'Andreas C.', initials: 'AC', color: '#1a56db', status: 'available', principal: true,  email: 'bangunasa@bangunasaecos.com' },
-  { id: 'elang',   name: 'Elang',      initials: 'EL', color: '#E02424', status: 'full',      principal: false, email: 'elang@bangunasaecos.com'      },
-]
+let PEOPLE = []
 
 let SESSION            = { personId: null, isMaster: false }
 let PENDING_APPROVALS  = []
@@ -979,6 +975,7 @@ function goBack() {
 
 function navPeople() {
   currentView = 'people'; activePerson = null; activeProject = null; activeSection = null
+  SESSION.personId = null; SESSION.isMaster = false
   document.getElementById('back-btn').classList.remove('show')
   show('view-people'); hide('view-projects'); hide('view-sections'); hide('view-items'); hide('view-trash'); hide('view-master')
   if (window.showDogs) window.showDogs()
