@@ -508,12 +508,17 @@
     .email-change-btn { padding:5px 14px; border-radius:20px; font-size:.72rem; font-weight:600; cursor:pointer; transition:all .2s; background:none; border:1.5px solid var(--border); color:var(--muted); font-family:'DM Sans',sans-serif; }
     .email-change-btn:hover { border-color:var(--text); color:var(--text); }
     .email-pending-chip { font-size:.62rem; font-weight:600; padding:2px 8px; border-radius:10px; background:#fff7ed; color:var(--orange); border:1px solid rgba(234,88,12,.2); }
+    .name-change-row { display:flex; align-items:center; gap:10px; padding:11px 14px; background:var(--white); border:1px solid var(--border); border-radius:10px; margin-bottom:14px; }
+    .name-change-btn { padding:5px 14px; border-radius:20px; font-size:.72rem; font-weight:600; cursor:pointer; transition:all .2s; background:none; border:1.5px solid var(--border); color:var(--muted); font-family:'DM Sans',sans-serif; }
+    .name-change-btn:hover { border-color:var(--text); color:var(--text); }
+    .name-pending-chip { font-size:.62rem; font-weight:600; padding:2px 8px; border-radius:10px; background:#fff7ed; color:var(--orange); border:1px solid rgba(234,88,12,.2); }
 
     /* ── SPECTATOR MODE (master viewing member workspace) ── */
     main.spectator .add-btn,
     main.spectator .avail-toggle-row,
     main.spectator .pin-change-row,
     main.spectator .email-change-row,
+    main.spectator .name-change-row,
     main.spectator .release-row,
     main.spectator .proj-act-btn,
     main.spectator .sec-act-btn,
@@ -636,6 +641,11 @@
       <span class="avail-toggle-label" style="font-size:.72rem">📧 Sign-in Email</span>
       <span class="email-pending-chip" id="email-pending-chip" style="display:none">Pending</span>
       <button class="email-change-btn" id="email-change-btn" onclick="openChangeEmailModal()">Change Email</button>
+    </div>
+    <div class="name-change-row" id="name-change-row" style="display:none">
+      <span class="avail-toggle-label" style="font-size:.72rem">✏️ Display Name</span>
+      <span class="name-pending-chip" id="name-pending-chip" style="display:none">Pending</span>
+      <button class="name-change-btn" id="name-change-btn" onclick="openChangeNameModal()">Change Name</button>
     </div>
     <div id="incoming-section"></div>
     <button class="add-btn" onclick="openNewProjectModal()">+ Add New Project</button>
@@ -859,6 +869,20 @@
   </div>
 </div>
 
+<!-- NAME CHANGE MODAL -->
+<div class="modal-overlay" id="name-change-modal" onclick="if(event.target===this)closeChangeNameModal()">
+  <div class="modal">
+    <div class="modal-title">Request Name Change</div>
+    <div class="modal-hint" id="name-change-hint"></div>
+    <input class="modal-input" id="new-name-input" type="text" placeholder="New display name" maxlength="60"
+      onkeydown="if(event.key==='Enter')submitChangeNameRequest()">
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeChangeNameModal()">Cancel</button>
+      <button class="btn-save" onclick="submitChangeNameRequest()">Send Request</button>
+    </div>
+  </div>
+</div>
+
 <!-- REQUEST TO JOIN MODAL -->
 <div class="modal-overlay" id="join-modal" onclick="if(event.target===this)closeJoinModal()">
   <div class="modal">
@@ -900,6 +924,7 @@ let PENDING_APPROVALS    = []
 let FORMER_MEMBERS       = []
 let PIN_RESET_REQUESTS   = []
 let EMAIL_CHANGE_REQUESTS = []
+let NAME_CHANGE_REQUESTS  = []
 
 const MEMBER_COLORS = [
   '#1a56db', '#E02424', '#16a34a', '#ea580c',
@@ -1100,6 +1125,7 @@ function _doNavProjects(personId) {
   renderAvailToggle()
   renderPinChangeRow()
   renderEmailChangeRow()
+  renderNameChangeRow()
   renderProjects()
 }
 function renderPinChangeRow() {
@@ -1121,6 +1147,22 @@ function renderEmailChangeRow() {
   } else {
     if (chip) chip.style.display = 'none'
     if (btn)  { btn.textContent = 'Change Email'; btn.disabled = false; btn.style.opacity = '' }
+  }
+}
+function renderNameChangeRow() {
+  const row = document.getElementById('name-change-row')
+  if (!row) return
+  if (SESSION.personId !== activePerson?.id) { row.style.display = 'none'; return }
+  row.style.display = 'flex'
+  const pending = NAME_CHANGE_REQUESTS.find(r => r.personId === SESSION.personId)
+  const chip = document.getElementById('name-pending-chip')
+  const btn  = document.getElementById('name-change-btn')
+  if (pending) {
+    if (chip) chip.style.display = 'inline-block'
+    if (btn)  { btn.textContent = 'Change Name'; btn.disabled = true; btn.style.opacity = '.4' }
+  } else {
+    if (chip) chip.style.display = 'none'
+    if (btn)  { btn.textContent = 'Change Name'; btn.disabled = false; btn.style.opacity = '' }
   }
 }
 
@@ -1224,6 +1266,10 @@ function openPinModal(personId, opts) {
   pinState.firstPin  = null
   pinState.onSuccess = opts.onSuccess || null
   const hasPin = !!getPin(personId)
+  if (!hasPin && !isMasterLogin && SESSION.personId !== personId) {
+    toast('Only ' + person.name + ' can create their own PIN — they must sign in first')
+    return
+  }
   pinState.mode = hasPin ? 'enter' : 'create'
   const av = document.getElementById('pin-avatar')
   av.textContent       = isMasterLogin ? '🔑' : person.initials
@@ -1448,12 +1494,93 @@ function rejectEmailChange(reqId) {
   renderPeople()
 }
 
+/* ── Name Change ── */
+function openChangeNameModal() {
+  const person = PEOPLE.find(p => p.id === SESSION.personId)
+  if (!person) return
+  const hint = document.getElementById('name-change-hint')
+  if (hint) hint.textContent = 'Current: ' + person.name + '. Master must approve before the change takes effect.'
+  document.getElementById('new-name-input').value = ''
+  document.getElementById('name-change-modal').classList.add('open')
+}
+function closeChangeNameModal() {
+  document.getElementById('name-change-modal').classList.remove('open')
+}
+function submitChangeNameRequest() {
+  const newName = document.getElementById('new-name-input').value.trim()
+  if (!newName) { toast('Please enter the new name'); return }
+  const person = PEOPLE.find(p => p.id === SESSION.personId)
+  if (!person) return
+  if (newName === person.name) { toast('That\'s already your current name'); return }
+  const already = NAME_CHANGE_REQUESTS.find(r => r.personId === person.id)
+  if (already) { toast('You already have a pending name change request'); return }
+  NAME_CHANGE_REQUESTS.push({
+    id: 'nc_' + Date.now(), personId: person.id,
+    initials: person.initials, color: person.color,
+    currentName: person.name, newName,
+    requestedAt: new Date().toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' })
+  })
+  saveState()
+  closeChangeNameModal()
+  toast('Name change request sent — waiting for master approval ✓')
+  renderNameChangeRow()
+}
+function approveNameChange(reqId) {
+  const req = NAME_CHANGE_REQUESTS.find(r => r.id === reqId)
+  if (!req) return
+  const person = PEOPLE.find(p => p.id === req.personId)
+  if (person) {
+    const oldName = person.name
+    person.name     = req.newName
+    person.initials = makeInitials(req.newName)
+    cascadeRenamePerson(oldName, req.newName)
+  }
+  NAME_CHANGE_REQUESTS = NAME_CHANGE_REQUESTS.filter(r => r.id !== reqId)
+  saveState()
+  toast((person ? req.newName : 'Member') + '\'s name updated ✓')
+  renderPeople()
+}
+function rejectNameChange(reqId) {
+  NAME_CHANGE_REQUESTS = NAME_CHANGE_REQUESTS.filter(r => r.id !== reqId)
+  saveState()
+  toast('Name change request rejected.')
+  renderPeople()
+}
+function cascadeRenamePerson(oldName, newName) {
+  PROJECTS.forEach(p => {
+    if (p.owner === oldName) p.owner = newName
+    if (p.collaborators) p.collaborators = p.collaborators.map(c => c === oldName ? newName : c)
+    if (p.pendingTransfer) {
+      if (p.pendingTransfer.to   === oldName) p.pendingTransfer.to   = newName
+      if (p.pendingTransfer.from === oldName) p.pendingTransfer.from = newName
+    }
+    if (p.pendingTeamUps) p.pendingTeamUps = p.pendingTeamUps.map(t => t === oldName ? newName : t)
+  })
+  Object.keys(SECTION_DATA).forEach(pid => {
+    Object.keys(SECTION_DATA[pid] || {}).forEach(sid => {
+      if (SECTION_DATA[pid][sid]?.assignee === oldName) SECTION_DATA[pid][sid].assignee = newName
+    })
+  })
+  Object.keys(TASKS).forEach(pid => {
+    Object.keys(TASKS[pid] || {}).forEach(sid => {
+      (TASKS[pid][sid] || []).forEach(t => { if (t.worker === oldName) t.worker = newName })
+    })
+  })
+  Object.keys(DONE).forEach(pid => {
+    Object.keys(DONE[pid] || {}).forEach(sid => {
+      Object.keys(DONE[pid][sid] || {}).forEach(taskId => {
+        if (DONE[pid][sid][taskId]?.doneBy === oldName) DONE[pid][sid][taskId].doneBy = newName
+      })
+    })
+  })
+}
+
 function renderPendingApprovals() {
   const el = document.getElementById('pending-approvals-section')
   if (!el) return
   if (!SESSION.isMaster) { el.innerHTML = ''; return }
 
-  const totalBadge = PENDING_APPROVALS.length + PIN_RESET_REQUESTS.length + EMAIL_CHANGE_REQUESTS.length
+  const totalBadge = PENDING_APPROVALS.length + PIN_RESET_REQUESTS.length + EMAIL_CHANGE_REQUESTS.length + NAME_CHANGE_REQUESTS.length
   const badge = totalBadge ? `<span class="messages-badge">${totalBadge}</span>` : ''
 
   const joinCards = PENDING_APPROVALS.map(pa => {
@@ -1500,7 +1627,21 @@ function renderPendingApprovals() {
       </div>
     </div>`)
 
-  const allCards = [...joinCards, ...pinCards, ...emailCards]
+  const nameCards = NAME_CHANGE_REQUESTS.map(r => `
+    <div class="msg-card">
+      <div class="msg-avatar" style="background:${r.color}">${r.initials}</div>
+      <div class="msg-body">
+        <div class="msg-name">${r.currentName}</div>
+        <div class="msg-email" style="font-size:.67rem">${r.currentName} → <strong>${r.newName}</strong></div>
+        <div class="msg-date">Name change · ${r.requestedAt}</div>
+      </div>
+      <div class="msg-actions">
+        <button class="accept-btn" onclick="approveNameChange('${r.id}')">Approve</button>
+        <button class="decline-btn" onclick="rejectNameChange('${r.id}')">Reject</button>
+      </div>
+    </div>`)
+
+  const allCards = [...joinCards, ...pinCards, ...emailCards, ...nameCards]
   const body = allCards.length ? allCards.join('') : `<div class="msg-empty">No pending requests</div>`
 
   el.innerHTML = `
@@ -3615,6 +3756,7 @@ function loadAndSync() {
     if (d.formerMembers)      FORMER_MEMBERS       = d.formerMembers
     if (d.pinResetRequests)   PIN_RESET_REQUESTS   = d.pinResetRequests
     if (d.emailChangeRequests) EMAIL_CHANGE_REQUESTS = d.emailChangeRequests
+    if (d.nameChangeRequests)  NAME_CHANGE_REQUESTS  = d.nameChangeRequests
     checkUserApproval()
   })
 }
@@ -3670,6 +3812,7 @@ function saveState() {
     formerMembers:       FORMER_MEMBERS,
     pinResetRequests:    PIN_RESET_REQUESTS,
     emailChangeRequests: EMAIL_CHANGE_REQUESTS,
+    nameChangeRequests:  NAME_CHANGE_REQUESTS,
     updatedAt:           firebase.firestore.FieldValue.serverTimestamp()
   }).catch(function(e) { console.error('saveState error:', e) })
 }
