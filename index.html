@@ -546,10 +546,43 @@
     .former-email { font-size:.68rem; color:var(--muted); opacity:.7; }
     .former-date  { margin-left:auto; font-size:.62rem; color:var(--muted); flex-shrink:0; }
 
+    /* ── LOGIN ── */
+    #login-screen { position:fixed; inset:0; z-index:9998; background:var(--bg); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:32px 24px; }
+    .login-logo { margin-bottom:12px; }
+    .login-tagline { font-size:.68rem; font-weight:500; letter-spacing:.22em; text-transform:uppercase; color:var(--muted); margin-bottom:52px; }
+    .login-card { background:var(--white); border:1px solid var(--border); border-radius:16px; padding:32px 28px; width:100%; max-width:360px; text-align:center; }
+    .login-card-title { font-size:1.15rem; font-weight:600; margin-bottom:6px; }
+    .login-card-desc  { font-size:.82rem; color:var(--muted); margin-bottom:28px; line-height:1.55; }
+    .btn-google { display:flex; align-items:center; justify-content:center; gap:10px; width:100%; padding:13px 20px; background:var(--white); border:1.5px solid var(--border); border-radius:10px; font-size:.88rem; font-weight:500; color:var(--text); cursor:pointer; transition:all .2s; font-family:'DM Sans',sans-serif; }
+    .btn-google:hover { border-color:rgba(17,17,17,.28); box-shadow:0 2px 10px rgba(0,0,0,.08); }
+    .login-err { margin-top:14px; padding:10px 16px; background:#fef2f2; border:1px solid #fecaca; border-radius:8px; color:#dc2626; font-size:.78rem; display:none; text-align:left; }
   </style>
 </head>
 <body>
 
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-logo"><img src="BAE LOGO.png" alt="BAE" style="height:64px;width:auto;object-fit:contain"></div>
+  <div class="login-tagline">Design Tracker</div>
+  <div class="login-card">
+    <div class="login-card-title">Team Access</div>
+    <div class="login-card-desc">Sign in with your Google account to request access.</div>
+    <button class="btn-google" onclick="doSignIn()">
+      <svg viewBox="0 0 48 48" width="18" height="18"><path fill="#4285F4" d="M44.5 20H24v8.5h11.8C34.7 33.9 29.8 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 4.1 29.6 2 24 2 11.8 2 2 11.8 2 24s9.8 22 22 22c11 0 21-8 21-21 0-1.3-.2-2.7-.5-4z"/></svg>
+      Sign in with Google
+    </button>
+    <div class="login-err" id="login-err"></div>
+  </div>
+</div>
+
+<!-- WAITING FOR APPROVAL -->
+<div id="waiting-screen" style="display:none;position:fixed;inset:0;z-index:9999;background:var(--bg);flex-direction:column;align-items:center;justify-content:center;padding:32px 20px">
+  <div style="font-size:2rem;margin-bottom:12px">⏳</div>
+  <div style="font-size:1.1rem;font-weight:700;margin-bottom:6px">Waiting for Approval</div>
+  <div style="font-size:.85rem;color:var(--muted);text-align:center;max-width:280px;margin-bottom:24px">Your access request has been sent to the principal. You'll be notified once approved.</div>
+  <div id="waiting-email" style="font-size:.75rem;color:var(--muted);margin-bottom:32px"></div>
+  <button onclick="doSignOut()" style="background:none;border:1px solid var(--border);border-radius:20px;padding:8px 20px;font-size:.78rem;color:var(--muted);cursor:pointer;font-family:'DM Sans',sans-serif">Sign Out</button>
+</div>
 
 <div id="header">
   <div class="header-left">
@@ -807,7 +840,8 @@
   <div class="modal">
     <div class="modal-title">Request to Join</div>
     <div class="modal-hint">Your request will be sent to the principal for approval.</div>
-    <input class="modal-input" id="join-name" type="text" placeholder="Your full name (e.g. Budi Santoso)" maxlength="60" onkeydown="if(event.key==='Enter')submitJoinRequest()">
+    <input class="modal-input" id="join-name" type="text" placeholder="Your full name (e.g. Budi Santoso)" maxlength="60">
+    <input class="modal-input" id="join-email" type="email" placeholder="Your email address" maxlength="100">
     <div class="modal-actions">
       <button class="btn-cancel" onclick="closeJoinModal()">Cancel</button>
       <button class="btn-save" onclick="submitJoinRequest()">Send Request</button>
@@ -819,6 +853,7 @@
 
 <!-- ═══ FIREBASE ═══ -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
 <script>
@@ -986,7 +1021,7 @@ function goBack() {
 function navPeople() {
   currentView = 'people'; activePerson = null; activeProject = null; activeSection = null
   SESSION.personId = null
-  SESSION.isMaster = false
+  SESSION.isMaster = isPrincipal()
   document.querySelector('main').classList.remove('spectator')
   document.getElementById('back-btn').classList.remove('show')
   show('view-people'); hide('view-projects'); hide('view-sections'); hide('view-items'); hide('view-trash'); hide('view-master')
@@ -1096,7 +1131,7 @@ function renderHeader() {
       <div style="display:flex;align-items:center;gap:6px;background:#111;color:#fff;border-radius:20px;padding:5px 13px 5px 9px;font-size:.72rem;font-weight:700;letter-spacing:.03em">
         <span style="font-size:.95rem;line-height:1">👑</span> Master
       </div>
-      <button class="btn-signout" onclick="signOutFully()">Sign Out</button>
+      <button class="btn-signout" onclick="doSignOut()">Sign Out</button>
     `
   } else if (SESSION.personId) {
     const person = PEOPLE.find(p => p.id === SESSION.personId)
@@ -1106,7 +1141,9 @@ function renderHeader() {
       <button class="btn-signout" onclick="signOut()">Sign Out</button>
     `
   } else {
-    el.innerHTML = ''
+    el.innerHTML = _fbUser
+      ? `<button class="btn-signout" onclick="doSignOut()">Sign Out</button>`
+      : ''
   }
 }
 
@@ -1116,14 +1153,7 @@ function signOut() {
   renderHeader()
   navPeople()
   toast('Signed out')
-}
-
-function signOutFully() {
-  SESSION.personId = null
-  SESSION.isMaster = false
-  renderHeader()
-  navPeople()
-  toast('Signed out')
+  doSignOut()
 }
 
 /* ════════════════════════════════════════════
@@ -1249,7 +1279,7 @@ function pinForgot() {
   if (already) { toast('Request already sent — waiting for master to reset your PIN'); return }
   PIN_RESET_REQUESTS.push({
     id: 'pr_' + Date.now(), personId: person.id, name: person.name,
-    color: person.color, initials: person.initials,
+    email: person.email || '', color: person.color, initials: person.initials,
     requestedAt: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
   })
   saveState()
@@ -1280,29 +1310,29 @@ function openChangePinModal() {
    REQUEST TO JOIN / PENDING APPROVALS
 ════════════════════════════════════════════ */
 function openJoinModal() {
-  document.getElementById('join-name').value = ''
+  document.getElementById('join-name').value  = ''
+  document.getElementById('join-email').value = ''
   document.getElementById('join-modal').classList.add('open')
 }
 function closeJoinModal() {
   document.getElementById('join-modal').classList.remove('open')
 }
 function submitJoinRequest() {
-  const name = document.getElementById('join-name').value.trim()
-  if (!name) { toast('Please enter your name'); return }
-  const already = PENDING_APPROVALS.find(p => p.name.toLowerCase() === name.toLowerCase())
-  if (already) { toast('A request with this name is already pending'); return }
-  if (PEOPLE.find(p => p.name.toLowerCase() === name.toLowerCase())) { toast('This name is already in the team — click your card to sign in'); return }
-  PENDING_APPROVALS.push({ id: 'pa_' + Date.now(), name, requestedAt: new Date().toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' }) })
+  const name  = document.getElementById('join-name').value.trim()
+  const email = document.getElementById('join-email').value.trim()
+  if (!name)  { toast('Please enter your name'); return }
+  if (!email) { toast('Please enter your email'); return }
+  PENDING_APPROVALS.push({ id: 'pa_' + Date.now(), name, email, requestedAt: new Date().toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' }) })
   saveState()
   closeJoinModal()
-  toast('Request sent — waiting for master approval ✓')
+  toast('Request sent to bangunasa@bangunasaecos.com ✓')
   renderPeople()
 }
 function approveMember(paId) {
   const pa = PENDING_APPROVALS.find(p => p.id === paId)
   if (!pa) return
   const id = 'member_' + Date.now()
-  PEOPLE.push({ id, name: pa.name, initials: makeInitials(pa.name), color: MEMBER_COLORS[PEOPLE.length % MEMBER_COLORS.length], status: 'available', principal: false })
+  PEOPLE.push({ id, name: pa.name, initials: makeInitials(pa.name), color: MEMBER_COLORS[PEOPLE.length % MEMBER_COLORS.length], status: 'available', email: pa.email, principal: false })
   ;[id].forEach(initTaskData)
   PENDING_APPROVALS = PENDING_APPROVALS.filter(p => p.id !== paId)
   saveState()
@@ -1342,6 +1372,7 @@ function renderPendingApprovals() {
         <div class="msg-avatar">${initials}</div>
         <div class="msg-body">
           <div class="msg-name">${pa.name}</div>
+          <div class="msg-email">${pa.email}</div>
           <div class="msg-date">Join request · ${pa.requestedAt}</div>
         </div>
         <div class="msg-actions">
@@ -1356,6 +1387,7 @@ function renderPendingApprovals() {
       <div class="msg-avatar" style="background:${r.color}">${r.initials}</div>
       <div class="msg-body">
         <div class="msg-name">${r.name}</div>
+        <div class="msg-email">${r.email}</div>
         <div class="msg-date">Forgot PIN · ${r.requestedAt}</div>
       </div>
       <div class="msg-actions">
@@ -1387,6 +1419,7 @@ function renderFormerMembers() {
           <div class="former-avatar" style="background:${m.color}">${m.initials}</div>
           <div>
             <div class="former-name">${m.name}</div>
+            ${m.email ? `<div class="former-email">${m.email}</div>` : ''}
           </div>
           <div class="former-date">Left ${m.removedAt}</div>
         </div>`).join('')}
@@ -2472,7 +2505,7 @@ function confirmRemoveMember() {
   }
   // archive to former members
   FORMER_MEMBERS.push({
-    id: person.id, name: person.name,
+    id: person.id, name: person.name, email: person.email || '',
     initials: person.initials, color: person.color,
     removedAt: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
   })
@@ -3418,7 +3451,7 @@ function toast(msg) {
 }
 
 /* ════════════════════════════════════════════
-   FIREBASE (Firestore only — no Auth)
+   FIREBASE
 ════════════════════════════════════════════ */
 firebase.initializeApp({
   apiKey:            "AIzaSyAO4VmHDOSxUidHH1m4TfDRGWoWbXSaup4",
@@ -3428,33 +3461,99 @@ firebase.initializeApp({
   messagingSenderId: "340863437607",
   appId:             "1:340863437607:web:8c5f79a13343aae3deb702"
 })
-const _db = firebase.firestore()
+const _auth = firebase.auth()
+const _db   = firebase.firestore()
+const _googleProvider = new firebase.auth.GoogleAuthProvider()
+_googleProvider.setCustomParameters({ prompt: 'select_account' })
 
+let _fbUser = null
 let _unsubState = null
+
+function doSignIn()  { _auth.signInWithPopup(_googleProvider).catch(e => showLoginErr(e.message)) }
+function doSignOut() { SESSION.personId = null; SESSION.isMaster = false; _auth.signOut() }
+
+function showLoginErr(msg) {
+  const el = document.getElementById('login-err')
+  if (el) { el.textContent = msg; el.style.display = 'block' }
+}
+
+_auth.onAuthStateChanged(function(user) {
+  if (user) {
+    _fbUser = user
+    document.getElementById('login-screen').style.display = 'none'
+    loadAndSync()
+  } else {
+    _fbUser = null
+    document.getElementById('login-screen').style.display = 'flex'
+    document.getElementById('waiting-screen').style.display = 'none'
+    if (_unsubState) { _unsubState(); _unsubState = null }
+    SESSION.personId = null; SESSION.isMaster = false
+    renderHeader()
+  }
+})
 
 function loadAndSync() {
   if (_unsubState) _unsubState()
   _unsubState = _db.doc('app/state').onSnapshot(function(snap) {
-    if (!snap.exists) { saveState(); return }
+    if (!snap.exists) {
+      saveState()
+      checkUserApproval()
+      return
+    }
     const d = snap.data()
-    if (d.people)           PEOPLE             = d.people
-    if (d.projects)         PROJECTS           = d.projects
-    if (d.tasks)            TASKS              = d.tasks
-    if (d.done)             DONE               = d.done
-    if (d.sectionData)      SECTION_DATA       = d.sectionData
-    if (d.pendingApprovals) PENDING_APPROVALS  = d.pendingApprovals
+    if (d.people)           PEOPLE           = d.people
+    if (d.projects)         PROJECTS         = d.projects
+    if (d.tasks)            TASKS            = d.tasks
+    if (d.done)             DONE             = d.done
+    if (d.sectionData)      SECTION_DATA     = d.sectionData
+    if (d.pendingApprovals)  PENDING_APPROVALS  = d.pendingApprovals
     if (d.formerMembers)    FORMER_MEMBERS     = d.formerMembers
     if (d.pinResetRequests) PIN_RESET_REQUESTS = d.pinResetRequests
-    renderHeader()
-    renderPeople()
-    if (SESSION.personId) {
-      const p = PEOPLE.find(function(x) { return x.id === SESSION.personId })
-      if (p && currentView === 'projects') renderProjects()
-    }
+    checkUserApproval()
   })
 }
 
+function isPrincipal() {
+  return _fbUser && _fbUser.email === 'bangunasa@bangunasaecos.com'
+}
+
+function checkUserApproval() {
+  if (!_fbUser) return
+  const email = _fbUser.email
+  // Principal email is always master — no approval needed
+  if (isPrincipal()) {
+    SESSION.isMaster = true
+    document.getElementById('waiting-screen').style.display = 'none'
+    renderHeader(); renderPeople()
+    return
+  }
+  const approved = PEOPLE.find(function(p) { return p.email === email })
+  if (approved) {
+    document.getElementById('waiting-screen').style.display = 'none'
+    renderHeader(); renderPeople()
+    if (SESSION.personId) {
+      const p = PEOPLE.find(function(x) { return x.id === SESSION.personId })
+      if (p) renderProjects()
+    }
+    return
+  }
+  const already = PENDING_APPROVALS.find(function(p) { return p.email === email })
+  if (!already) {
+    const name = _fbUser.displayName || email.split('@')[0]
+    PENDING_APPROVALS.push({
+      id: 'pa_' + Date.now(), name, email,
+      requestedAt: new Date().toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' })
+    })
+    saveState()
+  }
+  const ws = document.getElementById('waiting-screen')
+  ws.style.display = 'flex'
+  const we = document.getElementById('waiting-email')
+  if (we) we.textContent = email
+}
+
 function saveState() {
+  if (!_fbUser) return
   _db.doc('app/state').set({
     people:           PEOPLE,
     projects:         PROJECTS,
@@ -3469,7 +3568,8 @@ function saveState() {
 }
 
 /* ── Init ── */
-loadAndSync()
+renderHeader()
+renderPeople()
 
 /* ── Keyboard support for PIN modal ── */
 document.addEventListener('keydown', function(e) {
